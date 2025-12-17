@@ -40,14 +40,14 @@ class LLMService {
         response = await this.client.chat.completions.create({
           model: 'qwen-plus', // 可替换为 qwen-max 或 qwen-turbo
           messages,
-          temperature: 0.8,
+          temperature: 1.0, // 提高随机性
           max_tokens: 1000,
         });
       } else if (this.provider === 'deepseek') {
         response = await this.client.chat.completions.create({
           model: 'deepseek-chat',
           messages,
-          temperature: 0.8,
+          temperature: 1.0, // 提高随机性
           max_tokens: 1000,
         });
       }

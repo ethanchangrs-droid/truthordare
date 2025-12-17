@@ -159,7 +159,7 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
         { role: 'system', content: prompt.system },
         { role: 'user', content: prompt.user }
       ],
-      temperature: 0.9, // 提高随机性
+      temperature: 1.0, // 最大随机性
       max_tokens: 500   // 单条内容不需要太多 token
     })
   });
