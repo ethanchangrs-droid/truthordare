@@ -1,6 +1,17 @@
-日期(UTC+8): 2025-12-17 11:57:33 CST
-完成内容: 更新 PRD/SPEC/UI（补充限频策略为每分钟6次、Web端支持EdgeOne托管）
-当前状态: 文档已确认全部关键约束，准备进入工程实现阶段
-下一步: 初始化工程与 /api/generate 骨架；设置 LLM_PROVIDER 与密钥；端到端验证
-已知问题: 未建Git仓库；风格尺度细则待补充
-Commit Hash: 未提交
+日期(UTC+8): 2025-12-17 15:22:19 CST
+完成内容: 
+  - 修复小程序 WXML 数据绑定 bug (data.mode → mode)
+  - 实现 Web 端复制功能（单条复制 + 复制全部）
+  - 添加 Web 端「再来一题」功能
+  - 小程序 API 地址提取到配置文件（miniprogram/config/index.js）
+  - 补充 Web 端缺失文件（index.html, tailwind.config.js, postcss.config.js, index.css）
+  - 端到端测试验证：Web 端所有功能通过测试
+当前状态: Web 端功能完成度 100%，小程序端需真机测试验证
+下一步: 
+  - 小程序端真机测试（需在开发者工具中运行）
+  - 配置生产环境 API 域名
+  - 可选：添加参数调整 UI（count/audienceAge/intensity）
+已知问题: 
+  - 小程序需要在微信开发者工具中测试（无法在浏览器中测试）
+  - 生产环境需替换 miniprogram/config/index.js 中的 prodConfig.apiBaseUrl
+Commit Hash: c0874af

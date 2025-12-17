@@ -8,8 +8,8 @@
   <view class="section">
     <text class="section-title">🎮 模式选择</text>
     <view class="mode-buttons">
-      <button class="mode-btn {{data.mode === 'truth' ? 'active-truth' : ''}}" data-mode="truth" bindtap="selectMode">真心话</button>
-      <button class="mode-btn {{data.mode === 'dare' ? 'active-dare' : ''}}" data-mode="dare" bindtap="selectMode">大冒险</button>
+      <button class="mode-btn {{mode === 'truth' ? 'active-truth' : ''}}" data-mode="truth" bindtap="selectMode">真心话</button>
+      <button class="mode-btn {{mode === 'dare' ? 'active-dare' : ''}}" data-mode="dare" bindtap="selectMode">大冒险</button>
     </view>
   </view>
 
@@ -17,23 +17,23 @@
     <text class="section-title">🎨 风格选择</text>
     <view class="style-chips">
       <block wx:for="{{styles}}" wx:key="*this">
-        <button class="style-chip {{data.style === item ? 'active-style' : ''}}" data-style="{{item}}" bindtap="selectStyle">
+        <button class="style-chip {{style === item ? 'active-style' : ''}}" data-style="{{item}}" bindtap="selectStyle">
           {{item}}
         </button>
       </block>
     </view>
   </view>
 
-  <button class="generate-btn" bindtap="generate" disabled="{{data.loading}}">
-    {{data.loading ? '生成中...' : '生成题目'}}
+  <button class="generate-btn" bindtap="generate" disabled="{{loading}}">
+    {{loading ? '生成中...' : '生成题目'}}
   </button>
 
   <view class="section result-section">
     <text class="section-title">📋 生成结果</text>
     <view class="result-box">
-      <text wx:if="{{!data.result}}" class="placeholder">点击上方按钮生成题目</text>
-      <text wx:else>{{data.result}}</text>
-      <button wx:if="{{data.result}}" class="copy-btn" bindtap="copyResult">复制</button>
+      <text wx:if="{{!result}}" class="placeholder">点击上方按钮生成题目</text>
+      <text wx:else class="result-text">{{result}}</text>
+      <button wx:if="{{result}}" class="copy-btn" bindtap="copyResult">复制</button>
     </view>
   </view>
 </view>

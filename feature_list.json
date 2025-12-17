@@ -1,7 +1,7 @@
 [
-  {"id": "F-001", "title": "Web端：选择模式与风格并生成", "passes": false},
+  {"id": "F-001", "title": "Web端：选择模式与风格并生成", "passes": true},
   {"id": "F-002", "title": "小程序端：选择模式与风格并生成", "passes": false},
-  {"id": "F-003", "title": "LLM生成接口与Prompt管理", "passes": false},
-  {"id": "F-004", "title": "基本内容安全过滤", "passes": false},
-  {"id": "F-005", "title": "复制与分享生成内容", "passes": false}
+  {"id": "F-003", "title": "LLM生成接口与Prompt管理", "passes": true},
+  {"id": "F-004", "title": "基本内容安全过滤", "passes": true},
+  {"id": "F-005", "title": "复制与分享生成内容", "passes": true}
 ]

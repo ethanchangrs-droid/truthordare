@@ -1,9 +1,12 @@
- Page({
+import config from '../../config/index';
+
+Page({
   data: {
     mode: '', // truth | dare
     style: '', // 风格枚举
     styles: ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿'],
     result: null,
+    resultType: null, // truth | dare
     loading: false
   },
 
@@ -27,7 +30,7 @@
 
     // 调用后端接口
     wx.request({
-      url: 'http://localhost:3002/api/generate', // 注意：在真实的小程序环境中，这里需要使用HTTPS协议的域名
+      url: `${config.apiBaseUrl}/api/generate`,
       method: 'POST',
       header: {
         'content-type': 'application/json'
@@ -43,8 +46,10 @@
       success: (res) => {
         if (res.statusCode === 200 && res.data.items && res.data.items.length > 0) {
           // 显示第一个生成的结果
+          const item = res.data.items[0];
           this.setData({
-            result: res.data.items[0].text
+            result: item.text,
+            resultType: item.type
           });
         } else {
           // 处理错误情况
@@ -69,7 +74,12 @@
 
   copyResult() {
     if (this.data.result) {
-      wx.setClipboardData({ data: this.data.result });
+      wx.setClipboardData({ 
+        data: this.data.result,
+        success: () => {
+          wx.showToast({ title: '已复制', icon: 'success' });
+        }
+      });
     }
   }
 });

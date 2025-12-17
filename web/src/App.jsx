@@ -6,6 +6,7 @@ function App() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [copiedId, setCopiedId] = useState(null); // 复制成功提示
 
   const styles = ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿'];
 
@@ -13,6 +14,7 @@ function App() {
     setLoading(true);
     setError(null);
     setResults([]);
+    setCopiedId(null);
     
     try {
       const response = await fetch('/api/generate', {
@@ -41,6 +43,31 @@ function App() {
       setError('网络错误，请稍后再试');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 复制单条内容到剪贴板
+  const handleCopy = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000); // 2秒后隐藏提示
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  };
+
+  // 复制全部内容
+  const handleCopyAll = async () => {
+    const allText = results.map((item, i) => 
+      `${i + 1}. [${item.type === 'truth' ? '真心话' : '大冒险'}] ${item.text}`
+    ).join('\n');
+    try {
+      await navigator.clipboard.writeText(allText);
+      setCopiedId('all');
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
     }
   };
 
@@ -99,13 +126,25 @@ function App() {
         </section>
 
         {/* Generate Button */}
-        <button
-          className="w-full py-3 bg-purple-600 text-white rounded-lg font-bold text-lg shadow hover:bg-purple-700 transition disabled:opacity-50"
-          onClick={handleGenerate}
-          disabled={loading}
-        >
-          {loading ? '生成中...' : '生成题目'}
-        </button>
+        <div className="flex gap-3">
+          <button
+            className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-bold text-lg shadow hover:bg-purple-700 transition disabled:opacity-50"
+            onClick={handleGenerate}
+            disabled={loading}
+          >
+            {loading ? '生成中...' : '生成题目'}
+          </button>
+          {results.length > 0 && (
+            <button
+              className="px-4 py-3 bg-orange-500 text-white rounded-lg font-bold shadow hover:bg-orange-600 transition disabled:opacity-50"
+              onClick={handleGenerate}
+              disabled={loading}
+              title="再来一题"
+            >
+              🔄
+            </button>
+          )}
+        </div>
 
         {/* Error Message */}
         {error && (
@@ -116,20 +155,46 @@ function App() {
 
         {/* Result Display */}
         <section className="mt-6">
-          <h2 className="text-lg font-semibold text-gray-800">📋 生成结果</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-800">📋 生成结果</h2>
+            {results.length > 0 && (
+              <button
+                className={`text-sm px-3 py-1 rounded-full transition ${
+                  copiedId === 'all'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                onClick={handleCopyAll}
+              >
+                {copiedId === 'all' ? '✓ 已复制' : '复制全部'}
+              </button>
+            )}
+          </div>
           <div className="mt-2 space-y-3">
             {results.length > 0 ? (
               results.map((item, index) => (
                 <div 
-                  key={index} 
-                  className={`p-3 rounded-lg ${
+                  key={item.id || index} 
+                  className={`p-3 rounded-lg relative group ${
                     item.type === 'truth' 
                       ? 'bg-purple-50 border border-purple-200' 
                       : 'bg-orange-50 border border-orange-200'
                   }`}
                 >
-                  <div className="font-medium text-gray-800">
-                    {item.type === 'truth' ? '❓ 真心话' : '⚡ 大冒险'}
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-gray-800">
+                      {item.type === 'truth' ? '❓ 真心话' : '⚡ 大冒险'}
+                    </div>
+                    <button
+                      className={`text-xs px-2 py-1 rounded transition ${
+                        copiedId === item.id
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-white/50 text-gray-500 hover:bg-white hover:text-gray-700 opacity-0 group-hover:opacity-100'
+                      }`}
+                      onClick={() => handleCopy(item.text, item.id)}
+                    >
+                      {copiedId === item.id ? '✓ 已复制' : '复制'}
+                    </button>
                   </div>
                   <div className="mt-1 text-gray-700">{item.text}</div>
                 </div>
