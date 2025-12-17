@@ -1,114 +1,253 @@
-[
-  {
-    "id": "F-001",
-    "title": "Web端：选择模式与风格并生成",
-    "passes": true,
-    "priority": "P0",
-    "note": "已完成端到端测试，包含复制、再来一题功能"
-  },
-  {
-    "id": "F-002",
-    "title": "小程序端：选择模式与风格并生成",
-    "passes": false,
-    "priority": "P0",
-    "note": "代码已实现，待微信开发者工具真机测试"
-  },
-  {
-    "id": "F-003",
-    "title": "LLM生成接口与Prompt管理",
-    "passes": true,
-    "priority": "P0",
-    "note": "支持通义千问/DeepSeek切换，Prompt模板化"
-  },
-  {
-    "id": "F-004",
-    "title": "基本内容安全过滤",
-    "passes": true,
-    "priority": "P0",
-    "note": "使用 bad-words 库 + 自定义敏感词"
-  },
-  {
-    "id": "F-005",
-    "title": "复制与分享生成内容",
-    "passes": true,
-    "priority": "P0",
-    "note": "Web端：单条复制+复制全部；小程序端：复制按钮"
-  },
-  {
-    "id": "F-006",
-    "title": "实现缓存功能",
-    "passes": false,
-    "priority": "P1",
-    "note": "按 mode/style/locale/audienceAge/intensity 生成缓存 key，TTL 10分钟（内存缓存）"
-  },
-  {
-    "id": "F-007",
-    "title": "前端参数化UI",
-    "passes": false,
-    "priority": "P2",
-    "note": "暴露 count/audienceAge/intensity 调整UI，当前使用硬编码默认值"
-  },
-  {
-    "id": "F-008",
-    "title": "Web组件拆分",
-    "passes": false,
-    "priority": "P2",
-    "note": "将 App.jsx 中的组件独立为 ModeSelector/StyleSelector/ResultList 等"
-  },
-  {
-    "id": "F-009",
-    "title": "补生成功能",
-    "passes": false,
-    "priority": "P2",
-    "note": "当过滤后不足 count 时，允许补生成一次（SPEC 中定义）"
-  },
-  {
-    "id": "F-010",
-    "title": "配置生产环境API域名",
-    "passes": false,
-    "priority": "P1",
-    "note": "替换 miniprogram/config/index.js 中的 prodConfig.apiBaseUrl"
-  },
-  {
-    "id": "F-011",
-    "title": "单元测试",
-    "passes": false,
-    "priority": "P2",
-    "note": "后端核心逻辑测试（Prompt组装/过滤函数），目标覆盖率 > 80%"
-  },
-  {
-    "id": "F-012",
-    "title": "结构化日志与监控",
-    "passes": false,
-    "priority": "P2",
-    "note": "使用 Winston/Pino，记录 generate_request/generate_done/filter_triggered/error 事件"
-  },
-  {
-    "id": "F-013",
-    "title": "增强内容过滤",
-    "passes": false,
-    "priority": "P2",
-    "note": "接入第三方内容审核API，完善敏感词库"
-  },
-  {
-    "id": "F-014",
-    "title": "本地收藏功能",
-    "passes": false,
-    "priority": "P3",
-    "note": "PRD 中标注可选，MVP阶段可暂缓"
-  },
-  {
-    "id": "F-015",
-    "title": "多语言支持（en-US）",
-    "passes": false,
-    "priority": "P3",
-    "note": "当前仅支持 zh-CN，V2 功能"
-  },
-  {
-    "id": "F-016",
-    "title": "风格管理后台",
-    "passes": false,
-    "priority": "P3",
-    "note": "动态管理风格枚举，V2 功能"
+{
+  "project": "真心话/大冒险 LLM 生成器",
+  "version": "1.1",
+  "created_at": "2025-12-17",
+  "total_features": 16,
+  "features": [
+    {
+      "id": "FEAT-001",
+      "title": "Web端：选择模式与风格并生成",
+      "category": "前端-Web",
+      "description": "实现Web端基本功能：模式选择、风格选择、生成、结果展示、复制、再来一题",
+      "priority": "P0",
+      "steps": [
+        "实现模式选择器（真心话/大冒险）",
+        "实现风格选择器（11种风格）",
+        "实现生成按钮与API调用",
+        "实现结果展示列表",
+        "实现单条复制功能",
+        "实现复制全部功能",
+        "实现再来一题按钮"
+      ],
+      "passes": true
+    },
+    {
+      "id": "FEAT-002",
+      "title": "小程序端：选择模式与风格并生成",
+      "category": "前端-小程序",
+      "description": "实现微信小程序端基本功能，与Web端功能对等",
+      "priority": "P0",
+      "steps": [
+        "实现模式与风格选择UI",
+        "配置API地址管理",
+        "实现生成与结果展示",
+        "实现复制功能",
+        "真机测试验证"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-003",
+      "title": "LLM生成接口与Prompt管理",
+      "category": "后端-核心",
+      "description": "实现LLM服务封装，支持通义千问/DeepSeek切换，Prompt模板化管理",
+      "priority": "P0",
+      "steps": [
+        "实现LLM服务抽象层",
+        "集成通义千问API",
+        "集成DeepSeek API",
+        "实现Prompt模板管理",
+        "实现响应解析"
+      ],
+      "passes": true
+    },
+    {
+      "id": "FEAT-004",
+      "title": "基本内容安全过滤",
+      "category": "后端-安全",
+      "description": "使用bad-words库+自定义敏感词进行内容过滤",
+      "priority": "P0",
+      "steps": [
+        "集成bad-words库",
+        "配置自定义敏感词库",
+        "实现过滤函数",
+        "集成到生成流程"
+      ],
+      "passes": true
+    },
+    {
+      "id": "FEAT-005",
+      "title": "复制与分享生成内容",
+      "category": "前端-交互",
+      "description": "Web端：单条复制+复制全部；小程序端：复制按钮",
+      "priority": "P0",
+      "steps": [
+        "实现Web端单条复制",
+        "实现Web端复制全部",
+        "实现小程序复制功能"
+      ],
+      "passes": true
+    },
+    {
+      "id": "FEAT-006",
+      "title": "实现缓存功能",
+      "category": "后端-性能",
+      "description": "按mode/style/locale/audienceAge/intensity生成缓存key，TTL 10分钟（内存缓存）",
+      "priority": "P1",
+      "steps": [
+        "选择缓存库（node-cache）",
+        "实现缓存key生成逻辑",
+        "集成到生成接口",
+        "配置TTL为10分钟"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-007",
+      "title": "前端参数化UI",
+      "category": "前端-Web",
+      "description": "暴露count/audienceAge/intensity调整UI，当前使用硬编码默认值",
+      "priority": "P2",
+      "steps": [
+        "设计参数调整UI组件",
+        "实现count选择器",
+        "实现audienceAge选择器",
+        "实现intensity选择器",
+        "集成到主界面"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-008",
+      "title": "Web组件拆分",
+      "category": "前端-Web",
+      "description": "将App.jsx中的组件独立为ModeSelector/StyleSelector/ResultList等",
+      "priority": "P2",
+      "steps": [
+        "拆分ModeSelector组件",
+        "拆分StyleSelector组件",
+        "拆分ResultList组件",
+        "拆分ResultItem组件",
+        "优化组件间通信"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-009",
+      "title": "补生成功能",
+      "category": "后端-核心",
+      "description": "当过滤后不足count时，允许补生成一次（SPEC中定义）",
+      "priority": "P2",
+      "steps": [
+        "检测过滤后数量",
+        "实现补生成逻辑",
+        "限制补生成次数为1次",
+        "更新元数据记录"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-010",
+      "title": "配置生产环境API域名",
+      "category": "部署",
+      "description": "替换miniprogram/config/index.js中的prodConfig.apiBaseUrl",
+      "priority": "P1",
+      "steps": [
+        "确定生产环境域名",
+        "更新配置文件",
+        "测试生产环境调用"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-011",
+      "title": "单元测试",
+      "category": "测试",
+      "description": "后端核心逻辑测试（Prompt组装/过滤函数），目标覆盖率>80%",
+      "priority": "P2",
+      "steps": [
+        "配置测试框架（Jest）",
+        "编写Prompt组装测试",
+        "编写过滤函数测试",
+        "编写LLM服务测试",
+        "达到80%覆盖率"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-012",
+      "title": "结构化日志与监控",
+      "category": "后端-运维",
+      "description": "使用Winston/Pino，记录generate_request/generate_done/filter_triggered/error事件",
+      "priority": "P2",
+      "steps": [
+        "集成Winston或Pino",
+        "配置日志格式",
+        "添加关键事件日志",
+        "配置日志输出路径"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-013",
+      "title": "增强内容过滤",
+      "category": "后端-安全",
+      "description": "接入第三方内容审核API，完善敏感词库",
+      "priority": "P2",
+      "steps": [
+        "选择第三方审核服务",
+        "集成API",
+        "完善敏感词库",
+        "优化过滤策略"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-014",
+      "title": "本地收藏功能",
+      "category": "前端-功能",
+      "description": "PRD中标注可选，MVP阶段可暂缓",
+      "priority": "P3",
+      "steps": [
+        "设计收藏数据结构",
+        "实现本地存储",
+        "实现收藏UI",
+        "实现收藏列表查看"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-015",
+      "title": "多语言支持（en-US）",
+      "category": "前端-国际化",
+      "description": "当前仅支持zh-CN，V2功能",
+      "priority": "P3",
+      "steps": [
+        "配置i18n框架",
+        "翻译UI文案",
+        "实现语言切换",
+        "测试英文环境"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-016",
+      "title": "风格管理后台",
+      "category": "后端-管理",
+      "description": "动态管理风格枚举，V2功能",
+      "priority": "P3",
+      "steps": [
+        "设计管理后台UI",
+        "实现风格CRUD接口",
+        "实现权限控制",
+        "同步到前端"
+      ],
+      "passes": false
+    }
+  ],
+  "summary": {
+    "前端-Web": 3,
+    "前端-小程序": 1,
+    "前端-交互": 1,
+    "前端-功能": 1,
+    "前端-国际化": 1,
+    "后端-核心": 2,
+    "后端-安全": 2,
+    "后端-性能": 1,
+    "后端-运维": 1,
+    "后端-管理": 1,
+    "部署": 1,
+    "测试": 1,
+    "total": 16
   }
-]
+}
