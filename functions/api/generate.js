@@ -160,7 +160,9 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
         { role: 'user', content: prompt.user }
       ],
       temperature: 1.0, // 最大随机性
-      max_tokens: 500   // 单条内容不需要太多 token
+      max_tokens: 500,  // 单条内容不需要太多 token
+      frequency_penalty: 1.5, // 重复词惩罚：降低已出现词的重复概率
+      presence_penalty: 1.2   // 话题惩罚：鼓励新话题
     })
   });
 

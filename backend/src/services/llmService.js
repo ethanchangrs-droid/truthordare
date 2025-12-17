@@ -42,6 +42,8 @@ class LLMService {
           messages,
           temperature: 1.0, // 提高随机性
           max_tokens: 1000,
+          frequency_penalty: 1.5, // 重复词惩罚：降低已出现词的重复概率
+          presence_penalty: 1.2,  // 话题惩罚：鼓励新话题
         });
       } else if (this.provider === 'deepseek') {
         response = await this.client.chat.completions.create({
@@ -49,6 +51,8 @@ class LLMService {
           messages,
           temperature: 1.0, // 提高随机性
           max_tokens: 1000,
+          frequency_penalty: 1.5, // 重复词惩罚：降低已出现词的重复概率
+          presence_penalty: 1.2,  // 话题惩罚：鼓励新话题
         });
       }
 
