@@ -1,0 +1,112 @@
+/* miniprogram/pages/index/index.wxss */
+.container {
+  padding: 20rpx;
+  background-color: #f9f5ff;
+  min-height: 100vh;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 40rpx;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #7C5CFF;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #666;
+  margin-top: 10rpx;
+  display: block;
+}
+
+.section {
+  margin-bottom: 40rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 20rpx;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 20rpx;
+  background-color: #e0d6ff;
+  color: #7C5CFF;
+  border-radius: 16rpx;
+  font-weight: bold;
+}
+
+.mode-btn.active-truth {
+  background-color: #7C5CFF;
+  color: white;
+}
+
+.mode-btn.active-dare {
+  background-color: #FF7C5C;
+  color: white;
+}
+
+.style-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.style-chip {
+  padding: 16rpx 24rpx;
+  background-color: #eee;
+  color: #555;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+}
+
+.style-chip.active-style {
+  background-color: #7C5CFF;
+  color: white;
+}
+
+.generate-btn {
+  width: 100%;
+  padding: 30rpx;
+  background-color: #7C5CFF;
+  color: white;
+  font-size: 36rpx;
+  font-weight: bold;
+  border-radius: 16rpx;
+  margin-bottom: 40rpx;
+}
+
+.result-section .result-box {
+  padding: 30rpx;
+  background-color: white;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
+  position: relative;
+}
+
+.placeholder {
+  color: #aaa;
+  text-align: center;
+}
+
+.copy-btn {
+  margin-top: 20rpx;
+  padding: 16rpx 32rpx;
+  background-color: #FF7C5C;
+  color: white;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}

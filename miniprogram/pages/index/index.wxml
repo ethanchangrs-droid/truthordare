@@ -1,0 +1,39 @@
+<!-- pages/index/index.wxml -->
+<view class="container">
+  <view class="header">
+    <text class="title">🎉 真心话 / 大冒险</text>
+    <text class="subtitle">选择模式与风格，生成专属互动题目</text>
+  </view>
+
+  <view class="section">
+    <text class="section-title">🎮 模式选择</text>
+    <view class="mode-buttons">
+      <button class="mode-btn {{data.mode === 'truth' ? 'active-truth' : ''}}" data-mode="truth" bindtap="selectMode">真心话</button>
+      <button class="mode-btn {{data.mode === 'dare' ? 'active-dare' : ''}}" data-mode="dare" bindtap="selectMode">大冒险</button>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">🎨 风格选择</text>
+    <view class="style-chips">
+      <block wx:for="{{styles}}" wx:key="*this">
+        <button class="style-chip {{data.style === item ? 'active-style' : ''}}" data-style="{{item}}" bindtap="selectStyle">
+          {{item}}
+        </button>
+      </block>
+    </view>
+  </view>
+
+  <button class="generate-btn" bindtap="generate" disabled="{{data.loading}}">
+    {{data.loading ? '生成中...' : '生成题目'}}
+  </button>
+
+  <view class="section result-section">
+    <text class="section-title">📋 生成结果</text>
+    <view class="result-box">
+      <text wx:if="{{!data.result}}" class="placeholder">点击上方按钮生成题目</text>
+      <text wx:else>{{data.result}}</text>
+      <button wx:if="{{data.result}}" class="copy-btn" bindtap="copyResult">复制</button>
+    </view>
+  </view>
+</view>
