@@ -1,7 +1,32 @@
 [
-  {"id": "F-001", "title": "Web端：选择模式与风格并生成", "passes": true},
-  {"id": "F-002", "title": "小程序端：选择模式与风格并生成", "passes": false},
-  {"id": "F-003", "title": "LLM生成接口与Prompt管理", "passes": true},
-  {"id": "F-004", "title": "基本内容安全过滤", "passes": true},
-  {"id": "F-005", "title": "复制与分享生成内容", "passes": true}
+  {
+    "id": "F-001",
+    "title": "Web端：选择模式与风格并生成",
+    "passes": true,
+    "note": "已完成端到端测试，包含复制、再来一题功能"
+  },
+  {
+    "id": "F-002",
+    "title": "小程序端：选择模式与风格并生成",
+    "passes": false,
+    "note": "代码已实现，待微信开发者工具真机测试"
+  },
+  {
+    "id": "F-003",
+    "title": "LLM生成接口与Prompt管理",
+    "passes": true,
+    "note": "支持通义千问/DeepSeek切换，Prompt模板化"
+  },
+  {
+    "id": "F-004",
+    "title": "基本内容安全过滤",
+    "passes": true,
+    "note": "使用 bad-words 库 + 自定义敏感词"
+  },
+  {
+    "id": "F-005",
+    "title": "复制与分享生成内容",
+    "passes": true,
+    "note": "Web端：单条复制+复制全部；小程序端：复制按钮"
+  }
 ]
