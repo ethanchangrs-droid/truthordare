@@ -1,8 +1,8 @@
 {
   "project": "真心话/大冒险 LLM 生成器",
-  "version": "1.1",
+  "version": "1.2",
   "created_at": "2025-12-17",
-  "total_features": 16,
+  "total_features": 21,
   "features": [
     {
       "id": "FEAT-001",
@@ -233,10 +233,82 @@
         "同步到前端"
       ],
       "passes": false
+    },
+    {
+      "id": "FEAT-017",
+      "title": "迁移 LLM Base URLs 到环境变量",
+      "category": "后端-配置",
+      "description": "将通义千问和 DeepSeek 的 API Base URLs 从硬编码迁移到环境变量",
+      "priority": "P1",
+      "steps": [
+        "修改 llmService.js，支持 TONGYI_BASE_URL 环境变量",
+        "修改 llmService.js，支持 DEEPSEEK_BASE_URL 环境变量",
+        "更新 .env.example 文档",
+        "测试不同 Base URL 配置"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-018",
+      "title": "迁移 LLM 模型名称到环境变量",
+      "category": "后端-配置",
+      "description": "将 LLM 模型名称（qwen-plus, deepseek-chat）从硬编码迁移到环境变量",
+      "priority": "P1",
+      "steps": [
+        "修改 llmService.js，支持 TONGYI_MODEL 环境变量",
+        "修改 llmService.js，支持 DEEPSEEK_MODEL 环境变量",
+        "更新 .env.example 文档",
+        "测试不同模型配置"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-019",
+      "title": "迁移 LLM 参数到环境变量",
+      "category": "后端-配置",
+      "description": "将 temperature 和 max_tokens 从硬编码迁移到环境变量，便于调优",
+      "priority": "P2",
+      "steps": [
+        "修改 llmService.js，支持 LLM_TEMPERATURE 环境变量",
+        "修改 llmService.js，支持 LLM_MAX_TOKENS 环境变量",
+        "添加类型转换（parseFloat, parseInt）",
+        "更新 .env.example 文档",
+        "测试参数调优"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-020",
+      "title": "迁移缓存配置到环境变量",
+      "category": "后端-配置",
+      "description": "将缓存 TTL 从硬编码迁移到环境变量，便于运维调整",
+      "priority": "P2",
+      "steps": [
+        "修改 cacheService.js，支持 CACHE_TTL 环境变量",
+        "添加类型转换（parseInt）",
+        "更新 .env.example 文档",
+        "测试不同 TTL 配置"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FEAT-021",
+      "title": "Web 端环境变量配置",
+      "category": "前端-Web",
+      "description": "使用 Vite 环境变量管理端口和代理配置",
+      "priority": "P2",
+      "steps": [
+        "创建 web/.env.development 文件",
+        "创建 web/.env.production 文件",
+        "修改 vite.config.js，使用环境变量",
+        "更新 web/README.md 文档",
+        "测试不同环境配置"
+      ],
+      "passes": false
     }
   ],
   "summary": {
-    "前端-Web": 3,
+    "前端-Web": 4,
     "前端-小程序": 1,
     "前端-交互": 1,
     "前端-功能": 1,
@@ -246,8 +318,9 @@
     "后端-性能": 1,
     "后端-运维": 1,
     "后端-管理": 1,
+    "后端-配置": 4,
     "部署": 1,
     "测试": 1,
-    "total": 16
+    "total": 21
   }
 }
