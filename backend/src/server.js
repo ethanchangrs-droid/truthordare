@@ -2,17 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import generateRoutes from './routes/generateRoutes.js';
-import { createRateLimiter } from './middleware/rateLimiter.js';
+import rateLimiter from './middleware/rateLimiter.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
+
+console.log(`[Debug] 环境变量PORT: ${process.env.PORT}`);
+console.log(`[Debug] 实际使用端口: ${PORT}`);
 
 // 中间件
 app.use(cors());
 app.use(express.json());
-app.use(createRateLimiter()); // 全局限流（默认 6 次/分钟）
+app.use(rateLimiter); // 全局限流（默认 6 次/分钟）
 
 // 路由
 app.get('/', (req, res) => {

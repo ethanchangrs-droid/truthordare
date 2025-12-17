@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "后端服务：提供 /api/generate 接口用于生成真心话/大冒险题目",
   "main": "src/server.js",
+  "type": "module",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
@@ -10,9 +11,12 @@
   "dependencies": {
     "bad-words": "^4.0.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.1",
     "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "node-fetch": "^3.3.2",
     "openai": "^6.14.0"
   },
   "devDependencies": {

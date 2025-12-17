@@ -25,13 +25,46 @@
 
     this.setData({ loading: true });
 
-    // TODO: 调用后端接口
-    setTimeout(() => {
-      this.setData({
-        result: `[Mock] 请执行一项${this.data.mode === 'truth' ? '真心话' : '大冒险'}任务（风格：${this.data.style}）`,
-        loading: false
-      });
-    }, 500);
+    // 调用后端接口
+    wx.request({
+      url: 'http://localhost:3002/api/generate', // 注意：在真实的小程序环境中，这里需要使用HTTPS协议的域名
+      method: 'POST',
+      header: {
+        'content-type': 'application/json'
+      },
+      data: {
+        mode: this.data.mode,
+        style: this.data.style,
+        count: 1,
+        locale: 'zh-CN',
+        audienceAge: 'adult',
+        intensity: 'medium'
+      },
+      success: (res) => {
+        if (res.statusCode === 200 && res.data.items && res.data.items.length > 0) {
+          // 显示第一个生成的结果
+          this.setData({
+            result: res.data.items[0].text
+          });
+        } else {
+          // 处理错误情况
+          wx.showToast({ 
+            title: res.data.error || '生成失败', 
+            icon: 'none' 
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('API调用失败:', err);
+        wx.showToast({ 
+          title: '网络错误，请稍后再试', 
+          icon: 'none' 
+        });
+      },
+      complete: () => {
+        this.setData({ loading: false });
+      }
+    });
   },
 
   copyResult() {
