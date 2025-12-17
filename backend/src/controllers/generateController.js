@@ -1,5 +1,6 @@
 import llmService from '../services/llmService.js';
 import { ContentFilter } from '../utils/contentFilter.js';
+import cacheService from '../services/cacheService.js';
 
 export const generateQuestions = async (req, res) => {
   const { mode, style, locale = 'zh-CN', count = 10, audienceAge = 'adult', intensity = 'medium' } = req.body;
@@ -29,7 +30,22 @@ export const generateQuestions = async (req, res) => {
     return res.status(400).json({ error: '无效的尺度，必须是 soft, medium 或 hard' });
   }
 
+  const cacheParams = { mode, style, locale, audienceAge, intensity, count };
+
   try {
+    // 0. 检查缓存
+    const cachedResult = cacheService.get(cacheParams);
+    if (cachedResult) {
+      return res.json({
+        ...cachedResult,
+        meta: {
+          ...cachedResult.meta,
+          cached: true,
+          latencyMs: Date.now() - req.startTime,
+        }
+      });
+    }
+
     // 1. 调用 LLM 服务
     const rawItems = await llmService.generate({ mode, style, locale, count, audienceAge, intensity });
 
@@ -37,16 +53,25 @@ export const generateQuestions = async (req, res) => {
     const filteredItems = ContentFilter.filterItems(rawItems);
     const filteredCount = rawItems.length - filteredItems.length;
 
-    // 3. 返回结果
-    res.json({
+    // 3. 构建结果
+    const result = {
       items: filteredItems,
       meta: {
         provider: llmService.provider,
         promptId: 'prompt-001',
-        latencyMs: Date.now() - req.startTime, // 假设中间件记录了 startTime
-        filteredCount
+        latencyMs: Date.now() - req.startTime,
+        filteredCount,
+        cached: false
       }
-    });
+    };
+
+    // 4. 缓存结果（仅当有有效结果时）
+    if (filteredItems.length > 0) {
+      cacheService.set(cacheParams, result);
+    }
+
+    // 5. 返回结果
+    res.json(result);
   } catch (err) {
     console.error('[Controller] 生成失败:', err.message);
     // 如果是API密钥错误，返回更友好的提示

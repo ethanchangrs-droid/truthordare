@@ -90,7 +90,7 @@
         "集成到生成接口",
         "配置TTL为10分钟"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "FEAT-007",
