@@ -11,3 +11,7 @@ node_modules/
 # 文档和日志文件夹
 docs/
 log/
+
+# 部署指令文档（本地使用）
+PUSH_INSTRUCTIONS.md
+DEPLOY_EDGEONE.md
