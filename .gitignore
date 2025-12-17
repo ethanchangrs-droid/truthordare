@@ -7,3 +7,7 @@ node_modules/
 
 # 但保留示例文件
 !.env.example
+
+# 文档和日志文件夹
+docs/
+log/
