@@ -8,16 +8,18 @@
 
 ## 技术栈
 
-### 后端
-- **Node.js** + **Express**
-- **LLM**: 通义千问 / DeepSeek（OpenAI 兼容接口）
-- **缓存**: node-cache（内存缓存，TTL 10分钟）
-- **限流**: express-rate-limit（6次/分钟）
-- **内容过滤**: bad-words + 自定义敏感词
-
 ### 前端
 - **Web**: React + Vite + Tailwind CSS
 - **小程序**: 微信小程序原生框架
+
+### 后端（EdgeOne Edge Functions）
+- **LLM**: 通义千问 / DeepSeek（OpenAI 兼容接口）
+- **缓存**: 边缘函数内存缓存（TTL 10分钟）
+- **内容过滤**: 自定义敏感词过滤
+
+### 部署架构
+- **EdgeOne Pages**: 静态资源托管 + 边缘函数
+- **无需服务器**: 所有逻辑在边缘节点执行
 
 ## 快速开始
 
@@ -85,15 +87,9 @@ Web 应用将在 `http://localhost:5174` 启动。
 
 ```
 TruthorDare/
-├── backend/           # 后端服务
-│   ├── src/
-│   │   ├── server.js        # 入口文件
-│   │   ├── routes/          # 路由
-│   │   ├── controllers/     # 控制器
-│   │   ├── services/        # LLM 服务
-│   │   ├── middleware/      # 中间件
-│   │   └── utils/           # 工具函数
-│   └── .env.example         # 环境变量模板
+├── functions/         # EdgeOne 边缘函数
+│   └── api/
+│       └── generate.js      # /api/generate 接口
 ├── web/               # Web 前端
 │   └── src/
 │       ├── App.jsx          # 主组件
@@ -103,6 +99,13 @@ TruthorDare/
 │   │   └── index/           # 主页面
 │   └── config/
 │       └── index.js         # 配置文件
+├── backend/           # 后端服务（本地开发用）
+│   ├── src/
+│   │   ├── server.js        # 入口文件
+│   │   ├── services/        # LLM 服务
+│   │   └── utils/           # 工具函数
+│   └── .env.example         # 环境变量模板
+├── pages.json         # EdgeOne Pages 配置
 ├── feature_list.json  # 功能清单
 └── claude-progress.txt # 开发进度
 ```
@@ -159,30 +162,25 @@ TruthorDare/
 
 ## 部署
 
-### EdgeOne 部署（Web 端）
+### EdgeOne Pages 一键部署（推荐）
 
-1. 构建 Web 应用：
+本项目使用 **EdgeOne Pages + Edge Functions** 架构，**无需单独部署后端服务器**。
 
-```bash
-cd web
-npm run build
-```
+1. 在 EdgeOne 控制台创建 Pages 项目，连接 GitHub 仓库
 
-2. 将 `web/dist` 目录上传到 EdgeOne 静态托管
-3. 配置反向代理到后端 API
+2. 配置构建参数：
+   - 构建命令：`cd web && npm install && npm run build`
+   - 输出目录：`web/dist`
 
-### 后端部署
+3. 配置环境变量：
+   ```
+   LLM_PROVIDER=tongyi
+   TONGYI_API_KEY=sk-xxxxxxxxxxxxxx
+   ```
 
-支持任何 Node.js 托管服务：
-- 腾讯云 Serverless
-- Vercel
-- Railway
-- 自建服务器
+4. 点击部署，完成！
 
-环境变量配置：
-- 设置 `LLM_PROVIDER`
-- 设置对应的 `API_KEY`
-- 设置 `PORT`（默认 3002）
+详细部署指南：[DEPLOY_EDGEONE.md](./DEPLOY_EDGEONE.md)
 
 ## 开发进度
 

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://edgeone.ai/schemas/pages.json",
+  "name": "truthordare",
+  "build": {
+    "command": "cd web && npm install && npm run build",
+    "output": "web/dist"
+  },
+  "functions": {
+    "directory": "functions"
+  },
+  "routes": [
+    {
+      "pattern": "/api/*",
+      "function": true
+    },
+    {
+      "pattern": "/*",
+      "serve": "index.html"
+    }
+  ]
+}
+
