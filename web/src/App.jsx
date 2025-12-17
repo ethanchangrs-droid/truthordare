@@ -19,8 +19,8 @@ function App() {
     setError(null);
     setResult(null);
 
-    // 生成 1~100 随机数，用于缓存命中逻辑
-    const randomSeed = Math.floor(Math.random() * 100) + 1;
+    // 生成 1~1000 随机数，用于缓存命中逻辑（约0.1%命中率）
+    const randomSeed = Math.floor(Math.random() * 1000) + 1;
     
     try {
       const response = await fetch('/api/generate', {

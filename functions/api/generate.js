@@ -181,10 +181,11 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
  */
 const cache = new Map();
 const CACHE_TTL = 10 * 60 * 1000; // 10 分钟
+const MAX_CACHE_SIZE = 100; // 最多缓存 100 条记录
 
 /**
  * 生成缓存 Key
- * 使用 mode, style, seed 作为缓存键（约 1% 命中率）
+ * 使用 mode, style, seed 作为缓存键（seed 范围 1~1000，约 0.1% 命中率）
  */
 function getCacheKey({ mode, style, seed }) {
   return `${mode}:${style}:${seed}`;
@@ -200,6 +201,11 @@ function getFromCache(key) {
 }
 
 function setToCache(key, data) {
+  // LRU: 如果缓存满了，删除最旧的一条（Map 保持插入顺序）
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const firstKey = cache.keys().next().value;
+    cache.delete(firstKey);
+  }
   cache.set(key, { data, timestamp: Date.now() });
 }
 

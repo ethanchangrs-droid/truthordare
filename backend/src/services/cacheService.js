@@ -9,11 +9,12 @@ import crypto from 'crypto';
  */
 class CacheService {
   constructor() {
-    // 配置缓存：TTL 10分钟，每2分钟检查过期项
+    // 配置缓存：TTL 10分钟，每2分钟检查过期项，最多100条
     this.cache = new NodeCache({
       stdTTL: 600, // 10 minutes
       checkperiod: 120, // 2 minutes
       useClones: false, // 性能优化：不克隆对象
+      maxKeys: 100, // 最多缓存 100 条记录
     });
 
     // 统计信息
