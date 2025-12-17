@@ -5,7 +5,7 @@
 
 // 开发环境配置
 const devConfig = {
-  apiBaseUrl: 'http://localhost:3001',
+  apiBaseUrl: 'http://localhost:3002',
 };
 
 // 生产环境配置

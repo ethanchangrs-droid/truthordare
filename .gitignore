@@ -1,1 +1,9 @@
 node_modules/
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 但保留示例文件
+!.env.example
