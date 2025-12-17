@@ -3,30 +3,112 @@
     "id": "F-001",
     "title": "Web端：选择模式与风格并生成",
     "passes": true,
+    "priority": "P0",
     "note": "已完成端到端测试，包含复制、再来一题功能"
   },
   {
     "id": "F-002",
     "title": "小程序端：选择模式与风格并生成",
     "passes": false,
+    "priority": "P0",
     "note": "代码已实现，待微信开发者工具真机测试"
   },
   {
     "id": "F-003",
     "title": "LLM生成接口与Prompt管理",
     "passes": true,
+    "priority": "P0",
     "note": "支持通义千问/DeepSeek切换，Prompt模板化"
   },
   {
     "id": "F-004",
     "title": "基本内容安全过滤",
     "passes": true,
+    "priority": "P0",
     "note": "使用 bad-words 库 + 自定义敏感词"
   },
   {
     "id": "F-005",
     "title": "复制与分享生成内容",
     "passes": true,
+    "priority": "P0",
     "note": "Web端：单条复制+复制全部；小程序端：复制按钮"
+  },
+  {
+    "id": "F-006",
+    "title": "实现缓存功能",
+    "passes": false,
+    "priority": "P1",
+    "note": "按 mode/style/locale/audienceAge/intensity 生成缓存 key，TTL 10分钟（内存缓存）"
+  },
+  {
+    "id": "F-007",
+    "title": "前端参数化UI",
+    "passes": false,
+    "priority": "P2",
+    "note": "暴露 count/audienceAge/intensity 调整UI，当前使用硬编码默认值"
+  },
+  {
+    "id": "F-008",
+    "title": "Web组件拆分",
+    "passes": false,
+    "priority": "P2",
+    "note": "将 App.jsx 中的组件独立为 ModeSelector/StyleSelector/ResultList 等"
+  },
+  {
+    "id": "F-009",
+    "title": "补生成功能",
+    "passes": false,
+    "priority": "P2",
+    "note": "当过滤后不足 count 时，允许补生成一次（SPEC 中定义）"
+  },
+  {
+    "id": "F-010",
+    "title": "配置生产环境API域名",
+    "passes": false,
+    "priority": "P1",
+    "note": "替换 miniprogram/config/index.js 中的 prodConfig.apiBaseUrl"
+  },
+  {
+    "id": "F-011",
+    "title": "单元测试",
+    "passes": false,
+    "priority": "P2",
+    "note": "后端核心逻辑测试（Prompt组装/过滤函数），目标覆盖率 > 80%"
+  },
+  {
+    "id": "F-012",
+    "title": "结构化日志与监控",
+    "passes": false,
+    "priority": "P2",
+    "note": "使用 Winston/Pino，记录 generate_request/generate_done/filter_triggered/error 事件"
+  },
+  {
+    "id": "F-013",
+    "title": "增强内容过滤",
+    "passes": false,
+    "priority": "P2",
+    "note": "接入第三方内容审核API，完善敏感词库"
+  },
+  {
+    "id": "F-014",
+    "title": "本地收藏功能",
+    "passes": false,
+    "priority": "P3",
+    "note": "PRD 中标注可选，MVP阶段可暂缓"
+  },
+  {
+    "id": "F-015",
+    "title": "多语言支持（en-US）",
+    "passes": false,
+    "priority": "P3",
+    "note": "当前仅支持 zh-CN，V2 功能"
+  },
+  {
+    "id": "F-016",
+    "title": "风格管理后台",
+    "passes": false,
+    "priority": "P3",
+    "note": "动态管理风格枚举，V2 功能"
   }
 ]
