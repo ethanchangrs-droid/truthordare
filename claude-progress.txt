@@ -26,4 +26,4 @@
   - 小程序需要在微信开发者工具中测试（无法在浏览器中验证）
   - 缓存功能待实现
   - Web 组件未拆分（集成在 App.jsx 中）
-Commit Hash: a82fbbc
+Commit Hash: ad00630
