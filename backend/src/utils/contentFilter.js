@@ -1,4 +1,4 @@
-import BadWordsFilter from 'bad-words';
+const BadWordsFilter = require('bad-words');
 import { SENSITIVE_WORDS } from '../config/sensitiveWords.js'; // 自定义敏感词库
 
 const filter = new BadWordsFilter();
