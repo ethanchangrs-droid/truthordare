@@ -47,8 +47,8 @@ export const generateQuestions = async (req, res) => {
       });
     }
 
-    // 1. 调用 LLM 服务
-    const rawItems = await llmService.generate({ mode, style, locale, count, audienceAge, intensity });
+    // 1. 调用 LLM 服务（包含 seed 参数以增加题目多样性）
+    const rawItems = await llmService.generate({ mode, style, locale, count, audienceAge, intensity, seed });
 
     // 2. 内容安全过滤
     const filteredItems = ContentFilter.filterItems(rawItems);

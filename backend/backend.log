@@ -1,0 +1,50 @@
+
+> truthor-dare-backend@1.0.0 dev
+> nodemon src/server.js
+
+[33m[nodemon] 3.1.11[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[Debug] 环境变量PORT: 3002
+[Debug] 实际使用端口: 3002
+[Server] 后端服务启动于端口 3002
+[Cache] MISS - truth:暧昧:999 (hits: 0, misses: 1)
+[Cache] SET - truth:暧昧:999 (total sets: 1)
+[Cache] MISS - truth:暧昧:933 (hits: 0, misses: 2)
+[Cache] SET - truth:暧昧:933 (total sets: 2)
+[Cache] MISS - truth:暧昧:384 (hits: 0, misses: 3)
+[Cache] SET - truth:暧昧:384 (total sets: 3)
+[Cache] MISS - truth:暧昧:259 (hits: 0, misses: 4)
+[Cache] SET - truth:暧昧:259 (total sets: 4)
+[Cache] MISS - truth:暧昧:4157 (hits: 0, misses: 5)
+[Cache] SET - truth:暧昧:4157 (total sets: 5)
+[Cache] HIT - truth:暧昧:4157 (hits: 1, misses: 5)
+[Cache] MISS - truth:暧昧:519 (hits: 1, misses: 6)
+[Cache] SET - truth:暧昧:519 (total sets: 6)
+[Cache] MISS - truth:暧昧:41 (hits: 1, misses: 7)
+[Cache] SET - truth:暧昧:41 (total sets: 7)
+[Cache] MISS - truth:暧昧:806 (hits: 1, misses: 8)
+[Cache] SET - truth:暧昧:806 (total sets: 8)
+[Cache] MISS - truth:暧昧:141 (hits: 1, misses: 9)
+[Cache] SET - truth:暧昧:141 (total sets: 9)
+[Cache] MISS - truth:暧昧:178 (hits: 1, misses: 10)
+[Cache] SET - truth:暧昧:178 (total sets: 10)
+[Cache] MISS - truth:暧昧:903 (hits: 1, misses: 11)
+[Cache] SET - truth:暧昧:903 (total sets: 11)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[Debug] 环境变量PORT: 3002
+[Debug] 实际使用端口: 3002
+[Server] 后端服务启动于端口 3002
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[Debug] 环境变量PORT: 3002
+[Debug] 实际使用端口: 3002
+[Server] 后端服务启动于端口 3002
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node src/server.js`[39m
+[Debug] 环境变量PORT: 3002
+[Debug] 实际使用端口: 3002
+[Server] 后端服务启动于端口 3002

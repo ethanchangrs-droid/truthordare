@@ -60,7 +60,7 @@ function filterItems(items, isExplicit = false) {
 /**
  * 构建 Prompt
  */
-function buildPrompt({ mode, style, locale, count, audienceAge, intensity }) {
+function buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed }) {
   // 大尺度风格的特殊 Prompt
   const isExplicit = style === '大尺度';
   
@@ -91,8 +91,8 @@ function buildPrompt({ mode, style, locale, count, audienceAge, intensity }) {
 
   const userPrompt = `
 语言：${locale}；模式：${mode}；风格：${style}；数量：${count}
-受众年龄：${audienceAge}；尺度：${intensity}
-请生成 ${count} 条符合要求的内容，严格遵守 JSON 格式。
+受众年龄：${audienceAge}；尺度：${intensity}；题目编号：${seed || 'N/A'}
+请生成 ${count} 条符合要求的内容，每次根据题目编号生成不同的题目，严格遵守 JSON 格式。
 `;
   return { system: systemPrompt.trim(), user: userPrompt.trim() };
 }
@@ -125,9 +125,9 @@ function parseResponse(rawText) {
 /**
  * 调用 LLM API
  */
-async function callLLM(env, { mode, style, locale, count, audienceAge, intensity }) {
+async function callLLM(env, { mode, style, locale, count, audienceAge, intensity, seed }) {
   const provider = env.LLM_PROVIDER || 'deepseek'; // 默认使用 DeepSeek
-  const prompt = buildPrompt({ mode, style, locale, count, audienceAge, intensity });
+  const prompt = buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed });
   
   let apiUrl, apiKey, model;
   
@@ -291,8 +291,8 @@ export async function onRequest(context) {
       });
     }
 
-    // 调用 LLM
-    const rawItems = await callLLM(env, { mode, style, locale, count, audienceAge, intensity });
+    // 调用 LLM（包含 seed 参数以增加题目多样性）
+    const rawItems = await callLLM(env, { mode, style, locale, count, audienceAge, intensity, seed });
 
     // 内容过滤（大尺度风格使用宽松过滤）
     const isExplicit = style === '大尺度';

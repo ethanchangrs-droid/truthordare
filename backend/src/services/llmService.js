@@ -27,8 +27,8 @@ class LLMService {
     }
   }
 
-  async generate({ mode, style, locale, count, audienceAge, intensity }) {
-    const prompt = this.buildPrompt({ mode, style, locale, count, audienceAge, intensity });
+  async generate({ mode, style, locale, count, audienceAge, intensity, seed }) {
+    const prompt = this.buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed });
     const messages = [
       { role: 'system', content: prompt.system },
       { role: 'user', content: prompt.user }
@@ -60,7 +60,7 @@ class LLMService {
     }
   }
 
-  buildPrompt({ mode, style, locale, count, audienceAge, intensity }) {
+  buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed }) {
     const systemPrompt = `
 你是派对互动策划助手。根据模式与风格生成简洁、可执行的问题或任务，避免不当内容。
 输出格式为严格的 JSON 数组，每项包含 type（truth/dare）与 text（题目内容）。
@@ -72,8 +72,8 @@ class LLMService {
 `;
     const userPrompt = `
 语言：${locale}；模式：${mode}；风格：${style}；数量：${count}
-受众年龄：${audienceAge}；尺度：${intensity}
-请生成 ${count} 条符合要求的内容，严格遵守 JSON 格式。
+受众年龄：${audienceAge}；尺度：${intensity}；题目编号：${seed || 'N/A'}
+请生成 ${count} 条符合要求的内容，每次根据题目编号生成不同的题目，严格遵守 JSON 格式。
 `;
     return { system: systemPrompt, user: userPrompt };
   }
