@@ -4,7 +4,7 @@ Page({
   data: {
     mode: '', // truth | dare
     style: '', // 风格枚举
-    styles: ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿'],
+    styles: ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿适宜', '派对', '温情'],
     result: null,
     resultType: null, // truth | dare
     loading: false

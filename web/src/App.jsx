@@ -8,7 +8,7 @@ function App() {
   const [error, setError] = useState(null);
   const [copiedId, setCopiedId] = useState(null); // 复制成功提示
 
-  const styles = ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿'];
+  const styles = ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿适宜', '派对', '温情'];
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -207,6 +207,12 @@ function App() {
           </div>
         </section>
       </main>
+
+      {/* Footer - 免责声明与安全提示 */}
+      <footer className="max-w-md mx-auto mt-6 px-4 pb-8 text-center text-xs text-gray-400">
+        <p>🔒 我们会过滤不适宜内容，如有问题请反馈。</p>
+        <p className="mt-1">本工具仅供娱乐，生成内容由 AI 提供，请自行判断适用性。</p>
+      </footer>
     </div>
   );
 }

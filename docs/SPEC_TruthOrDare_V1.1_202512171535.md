@@ -1,7 +1,13 @@
 # 真心话 / 大冒险 LLM 生成器 技术设计（SPEC）
 
-版本: V1.0_202512171157  
-更新时间(UTC+8): 2025-12-17 11:57:33 CST
+版本: V1.1_202512171535  
+更新时间(UTC+8): 2025-12-17 15:35:27 CST
+
+## 版本记录
+| 版本 | 日期 | 更新内容 |
+|------|------|---------|
+| V1.1 | 2025-12-17 | 代码与文档对齐；统一参数命名；标注实现状态 |
+| V1.0 | 2025-12-17 | 初始版本 |
 
 ## 总体架构
 - 前端 Web（SPA/SSR）与小程序端（仅微信）
@@ -14,19 +20,19 @@
 2. 后端拼装 Prompt，调用 Provider，获取候选列表
 3. 过滤层剔除不合规项，返回安全结果与元数据（耗时、过滤比等）
 
-## API 设计
+## API 设计 ✅ 已实现
 - `POST /api/generate`
   - Request JSON：
-    - `mode`: `"truth" | "dare"`
-    - `style`: 如 `"normal" | "flirty" | "funny" | "work" | ...`（最终以枚举表为准）
-    - `locale`: `"zh-CN" | "en-US"` 等
-    - `count`: 默认 `10`
-    - `audienceAge`: `"kids" | "teen" | "adult"`
-    - `intensity`: `"soft" | "medium" | "hard"`
+    - `mode`: `"truth" | "dare"` ✅
+    - `style`: 中文风格名（正常/暧昧/搞笑/职场/酒局/家庭/烧脑/极限/少儿适宜/派对/温情）✅
+    - `locale`: `"zh-CN" | "en-US"`，默认 `zh-CN` ✅
+    - `count`: 1-20，默认 `10`（前端默认 `5`）✅
+    - `audienceAge`: `"kids" | "teen" | "adult"`，默认 `adult` ✅
+    - `intensity`: `"soft" | "medium" | "hard"`，默认 `medium` ✅
   - Response JSON：
-    - `items`: `[{ id, type, text }]`
-    - `meta`: `{ provider, promptId, latencyMs, filteredCount }`
-  - 错误：`400` 参数错误；`429` 触发限流；`500` 供应商错误
+    - `items`: `[{ id, type, text }]` ✅
+    - `meta`: `{ provider, promptId, latencyMs, filteredCount }` ✅
+  - 错误：`400` 参数错误；`429` 触发限流；`500` 供应商错误 ✅
 
 ## Prompt 模板（示例）
 - 系统指令：
@@ -36,14 +42,14 @@
   - 受众年龄：`{{audienceAge}}`；尺度：`{{intensity}}`
   - 输出格式：JSON 数组，每项包含 `type` 与 `text`，`type` 为 `truth` 或 `dare`。
 
-## 内容安全过滤
+## 内容安全过滤 ✅ 已实现
 - 供应商安全开关开启（如 `moderation`/`safety`）
-- 本地规则：敏感词/歧视/暴力/涉政/涉黄/人身攻击/隐私数据（PII）
-- 策略：超出限制直接剔除；不足 `count` 时允许补生成一次
+- 本地规则：使用 `bad-words` 库 + 自定义敏感词（`config/sensitiveWords.js`）✅
+- 策略：超出限制直接剔除 ✅；不足 `count` 时允许补生成一次（待实现）
 
 ## 速率限制与缓存
-- 限流：按 IP/会话 每分钟最多 6 次调用（宽松策略，即 360 次/小时）
-- 缓存：`key = hash(mode, style, locale, audienceAge, intensity)`，TTL 10 分钟（仅内存，不持久化用户数据）
+- 限流：按 IP/会话 每分钟最多 6 次调用 ✅（使用 `express-rate-limit`）
+- 缓存：`key = hash(mode, style, locale, audienceAge, intensity)`，TTL 10 分钟（待实现）
 
 ## 遥测与日志
 - 事件：`generate_request`、`generate_done`、`filter_triggered`、`error`
@@ -55,9 +61,9 @@
 - 可选：Serverless（如 Cloudflare/Netlify/Vercel Functions）或腾讯 EdgeOne 托管（Web 端后续支持）
 
 ## 前端实现要点
-- Web：组件化 Mode/Style 选择器、生成按钮、结果列表、复制、加载骨架/错误提示；整体视觉为派对风格
-- 小程序（微信）：原生组件等效实现，支持复制，不提供分享卡片
-- 状态管理：轻量（使用本地状态即可），必要时引入 Store
+- Web：组件化 Mode/Style 选择器、生成按钮、结果列表、复制、加载骨架/错误提示 ✅；整体视觉为派对风格 ✅
+- 小程序（微信）：原生组件等效实现 ✅，支持复制 ✅，不提供分享卡片
+- 状态管理：轻量（使用 React Hooks 本地状态）✅
 
 ## 测试方案
 - 单元：Prompt 组装/过滤函数

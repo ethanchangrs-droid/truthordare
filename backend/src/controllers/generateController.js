@@ -21,12 +21,12 @@ export const generateQuestions = async (req, res) => {
     return res.status(400).json({ error: '不支持的语言，仅支持 zh-CN 或 en-US' });
   }
 
-  if (!['child', 'teen', 'adult'].includes(audienceAge)) {
-    return res.status(400).json({ error: '无效的受众年龄，必须是 child, teen 或 adult' });
+  if (!['kids', 'teen', 'adult'].includes(audienceAge)) {
+    return res.status(400).json({ error: '无效的受众年龄，必须是 kids, teen 或 adult' });
   }
 
-  if (!['low', 'medium', 'high'].includes(intensity)) {
-    return res.status(400).json({ error: '无效的尺度，必须是 low, medium 或 high' });
+  if (!['soft', 'medium', 'hard'].includes(intensity)) {
+    return res.status(400).json({ error: '无效的尺度，必须是 soft, medium 或 hard' });
   }
 
   try {
