@@ -29,16 +29,12 @@ class CacheService {
    * @param {Object} params - 请求参数
    * @param {string} params.mode - truth/dare
    * @param {string} params.style - 风格名称
-   * @param {string} params.locale - 语言
-   * @param {string} params.audienceAge - 受众年龄
-   * @param {string} params.intensity - 尺度
-   * @param {number} params.count - 数量
-   * @returns {string} 缓存 key (MD5 hash)
+   * @param {number} params.seed - 随机数种子（1~100）
+   * @returns {string} 缓存 key
    */
   generateKey(params) {
-    const { mode, style, locale, audienceAge, intensity, count } = params;
-    const keyString = `${mode}:${style}:${locale}:${audienceAge}:${intensity}:${count}`;
-    return crypto.createHash('md5').update(keyString).digest('hex');
+    const { mode, style, seed } = params;
+    return `${mode}:${style}:${seed}`;
   }
 
   /**

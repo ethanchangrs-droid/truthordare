@@ -3,7 +3,7 @@ import { ContentFilter } from '../utils/contentFilter.js';
 import cacheService from '../services/cacheService.js';
 
 export const generateQuestions = async (req, res) => {
-  const { mode, style, locale = 'zh-CN', count = 10, audienceAge = 'adult', intensity = 'medium' } = req.body;
+  const { mode, style, locale = 'zh-CN', count = 1, audienceAge = 'adult', intensity = 'medium', seed = 1 } = req.body;
 
   // 参数校验
   if (!mode || !['truth', 'dare'].includes(mode)) {
@@ -30,7 +30,8 @@ export const generateQuestions = async (req, res) => {
     return res.status(400).json({ error: '无效的尺度，必须是 soft, medium 或 hard' });
   }
 
-  const cacheParams = { mode, style, locale, audienceAge, intensity, count };
+  // 缓存参数：使用 mode + style + seed（约 1% 命中率）
+  const cacheParams = { mode, style, seed };
 
   try {
     // 0. 检查缓存
@@ -58,10 +59,11 @@ export const generateQuestions = async (req, res) => {
       items: filteredItems,
       meta: {
         provider: llmService.provider,
-        promptId: 'prompt-001',
+        promptId: 'prompt-002',
         latencyMs: Date.now() - req.startTime,
         filteredCount,
-        cached: false
+        cached: false,
+        seed
       }
     };
 
