@@ -3,18 +3,24 @@ import React, { useState } from 'react';
 function App() {
   const [mode, setMode] = useState('truth');
   const [style, setStyle] = useState('正常');
-  const [results, setResults] = useState([]);
+  const [result, setResult] = useState(null); // 单条结果
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [copiedId, setCopiedId] = useState(null); // 复制成功提示
+  // const [copiedId, setCopiedId] = useState(null); // 复制成功提示 - 暂时禁用
 
-  const styles = ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿适宜', '派对', '温情'];
+  // 风格列表，新增"大尺度"
+  const styles = ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿适宜', '派对', '温情', '大尺度'];
 
   const handleGenerate = async () => {
+    // 防抖：生成过程中按钮点击无效
+    if (loading) return;
+
     setLoading(true);
     setError(null);
-    setResults([]);
-    setCopiedId(null);
+    setResult(null);
+
+    // 生成 1~100 随机数，用于缓存命中逻辑
+    const randomSeed = Math.floor(Math.random() * 100) + 1;
     
     try {
       const response = await fetch('/api/generate', {
@@ -25,17 +31,19 @@ function App() {
         body: JSON.stringify({
           mode,
           style,
-          count: 5,
+          count: 1, // 每次只生成一题
           locale: 'zh-CN',
           audienceAge: 'adult',
-          intensity: 'medium'
+          intensity: style === '大尺度' ? 'hard' : 'medium', // 大尺度风格使用 hard 强度
+          seed: randomSeed // 随机数种子，用于缓存
         }),
       });
 
       const data = await response.json();
       
       if (response.ok) {
-        setResults(data.items || []);
+        // 只取第一条结果
+        setResult(data.items?.[0] || null);
       } else {
         setError(data.error || '生成失败');
       }
@@ -46,30 +54,19 @@ function App() {
     }
   };
 
-  // 复制单条内容到剪贴板
-  const handleCopy = async (text, id) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000); // 2秒后隐藏提示
-    } catch (err) {
-      console.error('复制失败:', err);
-    }
-  };
+  // 复制单条内容到剪贴板 - 暂时禁用
+  // const handleCopy = async (text, id) => {
+  //   try {
+  //     await navigator.clipboard.writeText(text);
+  //     setCopiedId(id);
+  //     setTimeout(() => setCopiedId(null), 2000);
+  //   } catch (err) {
+  //     console.error('复制失败:', err);
+  //   }
+  // };
 
-  // 复制全部内容
-  const handleCopyAll = async () => {
-    const allText = results.map((item, i) => 
-      `${i + 1}. [${item.type === 'truth' ? '真心话' : '大冒险'}] ${item.text}`
-    ).join('\n');
-    try {
-      await navigator.clipboard.writeText(allText);
-      setCopiedId('all');
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.error('复制失败:', err);
-    }
-  };
+  // 复制全部内容 - 暂时禁用
+  // const handleCopyAll = async () => { ... };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-orange-50 p-4">
@@ -114,8 +111,12 @@ function App() {
                 key={s}
                 className={`px-3 py-1 rounded-full text-sm transition ${
                   style === s
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? s === '大尺度' 
+                      ? 'bg-red-600 text-white' // 大尺度用红色高亮
+                      : 'bg-purple-600 text-white'
+                    : s === '大尺度'
+                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 onClick={() => setStyle(s)}
               >
@@ -123,18 +124,27 @@ function App() {
               </button>
             ))}
           </div>
+          {/* 大尺度风格提示 */}
+          {style === '大尺度' && (
+            <p className="text-xs text-red-500 mt-2">⚠️ 此风格包含成人内容，仅限18岁以上用户</p>
+          )}
         </section>
 
         {/* Generate Button */}
         <div className="flex gap-3">
           <button
-            className="flex-1 py-3 bg-purple-600 text-white rounded-lg font-bold text-lg shadow hover:bg-purple-700 transition disabled:opacity-50"
+            className={`flex-1 py-3 rounded-lg font-bold text-lg shadow transition ${
+              loading 
+                ? 'bg-gray-400 text-white cursor-not-allowed' 
+                : 'bg-purple-600 text-white hover:bg-purple-700'
+            }`}
             onClick={handleGenerate}
             disabled={loading}
           >
             {loading ? '生成中...' : '生成题目'}
           </button>
-          {results.length > 0 && (
+          {/* 再来一题按钮 - 暂时禁用 */}
+          {/* {result && (
             <button
               className="px-4 py-3 bg-orange-500 text-white rounded-lg font-bold shadow hover:bg-orange-600 transition disabled:opacity-50"
               onClick={handleGenerate}
@@ -143,7 +153,7 @@ function App() {
             >
               🔄
             </button>
-          )}
+          )} */}
         </div>
 
         {/* Error Message */}
@@ -153,52 +163,31 @@ function App() {
           </div>
         )}
 
-        {/* Result Display */}
+        {/* Result Display - 简化为单条显示 */}
         <section className="mt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">📋 生成结果</h2>
-            {results.length > 0 && (
-              <button
-                className={`text-sm px-3 py-1 rounded-full transition ${
-                  copiedId === 'all'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          <h2 className="text-lg font-semibold text-gray-800">📋 生成结果</h2>
+          {/* 复制全部按钮 - 暂时禁用 */}
+          <div className="mt-2">
+            {result ? (
+              <div 
+                className={`p-4 rounded-lg ${
+                  result.type === 'truth' 
+                    ? 'bg-purple-50 border border-purple-200' 
+                    : 'bg-orange-50 border border-orange-200'
                 }`}
-                onClick={handleCopyAll}
               >
-                {copiedId === 'all' ? '✓ 已复制' : '复制全部'}
-              </button>
-            )}
-          </div>
-          <div className="mt-2 space-y-3">
-            {results.length > 0 ? (
-              results.map((item, index) => (
-                <div 
-                  key={item.id || index} 
-                  className={`p-3 rounded-lg relative group ${
-                    item.type === 'truth' 
-                      ? 'bg-purple-50 border border-purple-200' 
-                      : 'bg-orange-50 border border-orange-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-gray-800">
-                      {item.type === 'truth' ? '❓ 真心话' : '⚡ 大冒险'}
-                    </div>
-                    <button
-                      className={`text-xs px-2 py-1 rounded transition ${
-                        copiedId === item.id
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-white/50 text-gray-500 hover:bg-white hover:text-gray-700 opacity-0 group-hover:opacity-100'
-                      }`}
-                      onClick={() => handleCopy(item.text, item.id)}
-                    >
-                      {copiedId === item.id ? '✓ 已复制' : '复制'}
-                    </button>
-                  </div>
-                  <div className="mt-1 text-gray-700">{item.text}</div>
+                <div className="font-medium text-gray-800 text-lg">
+                  {result.type === 'truth' ? '❓ 真心话' : '⚡ 大冒险'}
                 </div>
-              ))
+                <div className="mt-2 text-gray-700 text-lg">{result.text}</div>
+                {/* 复制按钮 - 暂时禁用 */}
+                {/* <button
+                  className="mt-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  onClick={() => handleCopy(result.text, result.id)}
+                >
+                  复制
+                </button> */}
+              </div>
             ) : (
               <div className="text-gray-500 text-center py-8 border border-dashed border-gray-300 rounded-lg">
                 {loading ? '正在生成题目...' : '点击上方按钮生成题目'}

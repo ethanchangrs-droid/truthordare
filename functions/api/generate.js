@@ -5,38 +5,80 @@
  * - LLM_PROVIDER: 'tongyi' 或 'deepseek'
  * - TONGYI_API_KEY: 通义千问 API Key
  * - DEEPSEEK_API_KEY: DeepSeek API Key
+ * 
+ * 更新记录：
+ * - 2025-12-17: 新增 seed 参数用于缓存；新增"大尺度"风格；调整敏感词库；限流 20次/分钟
  */
 
-// 敏感词库（简化版，边缘函数不支持 bad-words 库）
+// 敏感词库（已放宽：暧昧/性暗示、酒精、恶作剧；保留：违法、未成年保护、歧视）
+// 注意：隐私相关限制已移除
 const SENSITIVE_WORDS = [
-  '暴力', '打人', '伤害', '虐待', '恐吓', '斗殴', '砍杀',
-  '色情', '性爱', '裸体', '三级片', '成人', '黄色', '性交易',
-  '政治', '政府', '国家', '领导人', '颠覆', '反政府', '游行',
-  '歧视', '侮辱', '骂人', '脏话', '种族', '地域黑', '性别歧视',
-  '身份证', '手机号', '住址', '银行卡', '密码', '隐私', '个人信息',
-  '自杀', '毒品', '赌博', '宗教', '邪教', '迷信', '诈骗'
+  // 违法相关（保留）
+  '毒品', '诈骗', '赌博', '走私', '贩卖',
+  // 严重暴力（保留）
+  '杀人', '砍杀', '虐待', '绑架',
+  // 未成年保护（保留）
+  '未成年', '儿童色情', '恋童',
+  // 歧视相关（保留）
+  '歧视', '种族歧视', '地域黑', '性别歧视', '残疾歧视',
+  // 极端内容（保留）
+  '自杀', '自残', '邪教', '恐怖主义'
+];
+
+// 大尺度风格的敏感词库（更宽松）
+const SENSITIVE_WORDS_EXPLICIT = [
+  // 违法相关（保留）
+  '毒品', '诈骗', '赌博', '走私', '贩卖',
+  // 严重暴力（保留）
+  '杀人', '砍杀', '虐待', '绑架',
+  // 未成年保护（保留）
+  '未成年', '儿童色情', '恋童',
+  // 歧视相关（保留）
+  '歧视', '种族歧视', '地域黑', '性别歧视', '残疾歧视',
+  // 极端内容（保留）
+  '自杀', '自残', '邪教', '恐怖主义'
 ];
 
 /**
  * 检查文本是否包含敏感词
+ * @param {string} text - 待检查文本
+ * @param {boolean} isExplicit - 是否为大尺度模式
  */
-function containsSensitive(text) {
+function containsSensitive(text, isExplicit = false) {
+  const words = isExplicit ? SENSITIVE_WORDS_EXPLICIT : SENSITIVE_WORDS;
   const lowerText = text.toLowerCase();
-  return SENSITIVE_WORDS.some(word => lowerText.includes(word.toLowerCase()));
+  return words.some(word => lowerText.includes(word.toLowerCase()));
 }
 
 /**
  * 过滤敏感内容
  */
-function filterItems(items) {
-  return items.filter(item => !containsSensitive(item.text));
+function filterItems(items, isExplicit = false) {
+  return items.filter(item => !containsSensitive(item.text, isExplicit));
 }
 
 /**
  * 构建 Prompt
  */
 function buildPrompt({ mode, style, locale, count, audienceAge, intensity }) {
-  const systemPrompt = `
+  // 大尺度风格的特殊 Prompt
+  const isExplicit = style === '大尺度';
+  
+  let systemPrompt;
+  if (isExplicit) {
+    systemPrompt = `
+你是成人派对互动策划助手。根据模式生成大胆、刺激的问题或任务，适合18岁以上成人聚会。
+可以包含：暧昧话题、性暗示、轻度身体接触挑战、饮酒惩罚、恶作剧挑战等。
+禁止包含：违法内容、涉及未成年人、歧视性内容、严重暴力。
+输出格式为严格的 JSON 数组，每项包含 type（truth/dare）与 text（题目内容）。
+示例：
+[
+  {"type": "truth", "text": "你最大胆的一次约会经历是什么？"},
+  {"type": "dare", "text": "选一个人，用眼神对视30秒不许笑"}
+]
+`;
+  } else {
+    systemPrompt = `
 你是派对互动策划助手。根据模式与风格生成简洁、可执行的问题或任务，避免不当内容。
 输出格式为严格的 JSON 数组，每项包含 type（truth/dare）与 text（题目内容）。
 示例：
@@ -45,6 +87,8 @@ function buildPrompt({ mode, style, locale, count, audienceAge, intensity }) {
   {"type": "dare", "text": "模仿一种动物叫声持续10秒"}
 ]
 `;
+  }
+
   const userPrompt = `
 语言：${locale}；模式：${mode}；风格：${style}；数量：${count}
 受众年龄：${audienceAge}；尺度：${intensity}
@@ -82,7 +126,7 @@ function parseResponse(rawText) {
  * 调用 LLM API
  */
 async function callLLM(env, { mode, style, locale, count, audienceAge, intensity }) {
-  const provider = env.LLM_PROVIDER || 'tongyi';
+  const provider = env.LLM_PROVIDER || 'deepseek'; // 默认使用 DeepSeek
   const prompt = buildPrompt({ mode, style, locale, count, audienceAge, intensity });
   
   let apiUrl, apiKey, model;
@@ -115,8 +159,8 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
         { role: 'system', content: prompt.system },
         { role: 'user', content: prompt.user }
       ],
-      temperature: 0.8,
-      max_tokens: 1000
+      temperature: 0.9, // 提高随机性
+      max_tokens: 500   // 单条内容不需要太多 token
     })
   });
 
@@ -133,12 +177,17 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
 
 /**
  * 简单的内存缓存（边缘函数中缓存生命周期较短）
+ * 注意：不同边缘节点的缓存是独立的
  */
 const cache = new Map();
 const CACHE_TTL = 10 * 60 * 1000; // 10 分钟
 
-function getCacheKey(params) {
-  return JSON.stringify(params);
+/**
+ * 生成缓存 Key
+ * 使用 mode, style, seed 作为缓存键（约 1% 命中率）
+ */
+function getCacheKey({ mode, style, seed }) {
+  return `${mode}:${style}:${seed}`;
 }
 
 function getFromCache(key) {
@@ -188,9 +237,10 @@ export async function onRequest(context) {
       mode, 
       style, 
       locale = 'zh-CN', 
-      count = 10, 
+      count = 1, // 默认生成 1 条
       audienceAge = 'adult', 
-      intensity = 'medium' 
+      intensity = 'medium',
+      seed = 1 // 随机数种子，用于缓存
     } = body;
 
     // 参数校验
@@ -218,8 +268,8 @@ export async function onRequest(context) {
       return jsonResponse({ error: '无效的尺度，必须是 soft, medium 或 hard' }, 400);
     }
 
-    const cacheParams = { mode, style, locale, audienceAge, intensity, count };
-    const cacheKey = getCacheKey(cacheParams);
+    // 缓存 Key：mode + style + seed（约 1% 命中率）
+    const cacheKey = getCacheKey({ mode, style, seed });
 
     // 检查缓存
     const cachedResult = getFromCache(cacheKey);
@@ -229,7 +279,8 @@ export async function onRequest(context) {
         meta: {
           ...cachedResult.meta,
           cached: true,
-          latencyMs: Date.now() - startTime
+          latencyMs: Date.now() - startTime,
+          seed
         }
       });
     }
@@ -237,18 +288,20 @@ export async function onRequest(context) {
     // 调用 LLM
     const rawItems = await callLLM(env, { mode, style, locale, count, audienceAge, intensity });
 
-    // 内容过滤
-    const filteredItems = filterItems(rawItems);
+    // 内容过滤（大尺度风格使用宽松过滤）
+    const isExplicit = style === '大尺度';
+    const filteredItems = filterItems(rawItems, isExplicit);
     const filteredCount = rawItems.length - filteredItems.length;
 
     const result = {
       items: filteredItems,
       meta: {
-        provider: env.LLM_PROVIDER || 'tongyi',
-        promptId: 'prompt-001',
+        provider: env.LLM_PROVIDER || 'deepseek',
+        promptId: 'prompt-002',
         latencyMs: Date.now() - startTime,
         filteredCount,
-        cached: false
+        cached: false,
+        seed
       }
     };
 
@@ -285,4 +338,3 @@ function jsonResponse(data, status = 200) {
     }
   });
 }
-
