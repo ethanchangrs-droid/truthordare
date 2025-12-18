@@ -2,7 +2,7 @@
   "project": "真心话/大冒险 LLM 生成器",
   "version": "1.4",
   "created_at": "2025-12-17",
-  "total_features": 23,
+  "total_features": 25,
   "features": [
     {
       "id": "FEAT-001",
@@ -339,6 +339,41 @@
         "更新 docs 文档到 V1.3"
       ],
       "passes": true
+    },
+    {
+      "id": "FEAT-024",
+      "title": "架构重构：提取公共模块（shared/）",
+      "category": "架构-重构",
+      "description": "提取 prompt 构建和 LLM 参数配置到 shared/ 公共模块，消除 backend 和 functions 代码重复",
+      "priority": "P0",
+      "steps": [
+        "创建 shared/prompt/dimensions.js - 风格维度定义",
+        "创建 shared/prompt/builder.js - Prompt 构建逻辑",
+        "创建 shared/config/llm-params.js - LLM 参数配置（单一真实源）",
+        "backend 引用 shared/ (直接 import)",
+        "创建 functions/api/generate-source.js 引用 shared/",
+        "配置 esbuild 打包脚本",
+        "实现打包命令 npm run build:functions",
+        "清理 backend/.env.example 冗余配置"
+      ],
+      "passes": true
+    },
+    {
+      "id": "FEAT-025",
+      "title": "题目多样性优化",
+      "category": "后端-核心",
+      "description": "为每种风格定义8个话题维度，优化LLM参数，提升题目多样性和随机性",
+      "priority": "P0",
+      "steps": [
+        "定义12种风格各8个话题维度",
+        "优化随机数范围 1~1000",
+        "实现 LRU 缓存（上限100条）",
+        "seed 参数传递给 LLM",
+        "提高 temperature 到 1.0",
+        "添加 frequency_penalty=1.5 和 presence_penalty=1.2",
+        "端到端测试验证多样性"
+      ],
+      "passes": true
     }
   ],
   "summary": {
@@ -347,14 +382,15 @@
     "前端-交互": 1,
     "前端-功能": 1,
     "前端-国际化": 1,
-    "后端-核心": 2,
+    "后端-核心": 3,
     "后端-安全": 2,
     "后端-性能": 1,
     "后端-运维": 1,
     "后端-管理": 1,
     "后端-配置": 4,
+    "架构-重构": 1,
     "部署": 2,
     "测试": 1,
-    "total": 23
+    "total": 25
   }
 }

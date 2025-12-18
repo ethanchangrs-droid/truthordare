@@ -14,16 +14,16 @@ import { dirname, resolve } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, '../..');
+const projectRoot = resolve(__dirname, '..');
 
 async function bundle() {
   console.log('[Bundle] 开始打包 EdgeOne Functions...');
   
   try {
     await esbuild.build({
-      entryPoints: [resolve(projectRoot, 'functions/api/generate-source.js')],
+      entryPoints: [resolve(projectRoot, 'functions', 'api', 'generate-source.js')],
       bundle: true,
-      outfile: resolve(projectRoot, 'functions/api/generate.js'),
+      outfile: resolve(projectRoot, 'functions', 'api', 'generate.js'),
       format: 'esm',
       platform: 'browser', // EdgeOne Functions 运行在类浏览器环境
       target: 'esnext',

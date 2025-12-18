@@ -1,0 +1,308 @@
+/**
+ * EdgeOne Pages Function - 生成真心话/大冒险题目
+ * 
+ * ⚠️ 这是源文件，打包后部署到 EdgeOne
+ * 使用 `npm run build:functions` 打包成 generate.js
+ * 
+ * 环境变量配置（在 EdgeOne 控制台设置）：
+ * - LLM_PROVIDER: 'tongyi' 或 'deepseek'
+ * - TONGYI_API_KEY: 通义千问 API Key
+ * - DEEPSEEK_API_KEY: DeepSeek API Key
+ */
+
+import { buildPrompt } from '../../shared/prompt/builder.js';
+import { llmParams } from '../../shared/config/llm-params.js';
+
+// 敏感词库（已放宽：暧昧/性暗示、酒精、恶作剧；保留：违法、未成年保护、歧视）
+const SENSITIVE_WORDS = [
+  // 违法相关（保留）
+  '毒品', '诈骗', '赌博', '走私', '贩卖',
+  // 严重暴力（保留）
+  '杀人', '砍杀', '虐待', '绑架',
+  // 未成年保护（保留）
+  '未成年', '儿童色情', '恋童',
+  // 歧视相关（保留）
+  '歧视', '种族歧视', '地域黑', '性别歧视', '残疾歧视',
+  // 极端内容（保留）
+  '自杀', '自残', '邪教', '恐怖主义'
+];
+
+// 大尺度风格的敏感词库（更宽松）
+const SENSITIVE_WORDS_EXPLICIT = [
+  // 违法相关（保留）
+  '毒品', '诈骗', '赌博', '走私', '贩卖',
+  // 严重暴力（保留）
+  '杀人', '砍杀', '虐待', '绑架',
+  // 未成年保护（保留）
+  '未成年', '儿童色情', '恋童',
+  // 歧视相关（保留）
+  '歧视', '种族歧视', '地域黑', '性别歧视', '残疾歧视',
+  // 极端内容（保留）
+  '自杀', '自残', '邪教', '恐怖主义'
+];
+
+/**
+ * 检查文本是否包含敏感词
+ */
+function containsSensitive(text, isExplicit = false) {
+  const words = isExplicit ? SENSITIVE_WORDS_EXPLICIT : SENSITIVE_WORDS;
+  const lowerText = text.toLowerCase();
+  return words.some(word => lowerText.includes(word.toLowerCase()));
+}
+
+/**
+ * 过滤敏感内容
+ */
+function filterItems(items, isExplicit = false) {
+  return items.filter(item => !containsSensitive(item.text, isExplicit));
+}
+
+/**
+ * 解析 LLM 响应
+ */
+function parseResponse(rawText) {
+  try {
+    const jsonMatch = rawText.match(/\[([\s\S]*)\]/);
+    const jsonString = jsonMatch ? `[${jsonMatch[1]}]` : rawText;
+    const items = JSON.parse(jsonString);
+
+    if (!Array.isArray(items)) {
+      throw new Error('解析失败：响应不是数组');
+    }
+
+    return items.map((item, index) => ({
+      id: `gen-${Date.now()}-${index}`,
+      type: item.type,
+      text: item.text
+    }));
+  } catch (err) {
+    console.error('[LLM] 解析响应失败:', rawText, err.message);
+    throw new Error(`LLM响应解析失败: ${err.message}`);
+  }
+}
+
+/**
+ * 调用 LLM API
+ */
+async function callLLM(env, { mode, style, locale, count, audienceAge, intensity, seed }) {
+  const provider = env.LLM_PROVIDER || 'deepseek';
+  const prompt = buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed });
+  
+  let apiUrl, apiKey, model;
+  
+  if (provider === 'tongyi') {
+    apiUrl = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+    apiKey = env.TONGYI_API_KEY;
+    model = llmParams.models.tongyi;
+  } else if (provider === 'deepseek') {
+    apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+    apiKey = env.DEEPSEEK_API_KEY;
+    model = llmParams.models.deepseek;
+  } else {
+    throw new Error(`不支持的 LLM 供应商: ${provider}`);
+  }
+
+  if (!apiKey) {
+    throw new Error(`未配置 ${provider.toUpperCase()}_API_KEY 环境变量`);
+  }
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: prompt.system },
+        { role: 'user', content: prompt.user }
+      ],
+      temperature: llmParams.temperature,
+      max_tokens: llmParams.maxTokens,
+      frequency_penalty: llmParams.frequencyPenalty,
+      presence_penalty: llmParams.presencePenalty
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`LLM API 调用失败: ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+  const rawText = data.choices?.[0]?.message?.content?.trim() || '';
+  
+  return parseResponse(rawText);
+}
+
+/**
+ * 简单的内存缓存
+ */
+const cache = new Map();
+
+function getCacheKey({ mode, style, seed }) {
+  return `${mode}:${style}:${seed}`;
+}
+
+function getFromCache(key) {
+  const entry = cache.get(key);
+  if (entry && Date.now() - entry.timestamp < llmParams.cache.ttl * 1000) {
+    return entry.data;
+  }
+  cache.delete(key);
+  return null;
+}
+
+function setToCache(key, data) {
+  // LRU: 如果缓存满了，删除最旧的一条
+  if (cache.size >= llmParams.cache.maxSize) {
+    const firstKey = cache.keys().next().value;
+    cache.delete(firstKey);
+  }
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+/**
+ * 简单的限流器
+ */
+const rateLimitStore = new Map();
+
+function checkRateLimit(clientIp) {
+  const now = Date.now();
+  if (!rateLimitStore.has(clientIp)) {
+    rateLimitStore.set(clientIp, []);
+  }
+  
+  const requests = rateLimitStore.get(clientIp);
+  const windowStart = now - 60 * 1000; // 1 分钟窗口
+  rateLimitStore.set(clientIp, requests.filter(ts => ts > windowStart));
+
+  if (rateLimitStore.get(clientIp).length >= llmParams.rateLimit.perMinute) {
+    return false;
+  }
+  
+  rateLimitStore.get(clientIp).push(now);
+  return true;
+}
+
+/**
+ * 辅助函数：JSON 响应
+ */
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  });
+}
+
+/**
+ * EdgeOne Functions 入口
+ */
+export async function onRequest(context) {
+  const { request, env } = context;
+  const startTime = Date.now();
+
+  // CORS 预检
+  if (request.method === 'OPTIONS') {
+    return jsonResponse({}, 204);
+  }
+
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: '仅支持 POST 请求' }, 405);
+  }
+
+  // 限流检查
+  const clientIp = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (!checkRateLimit(clientIp)) {
+    return jsonResponse({ 
+      error: `请求过于频繁，请稍后再试（限制：${llmParams.rateLimit.perMinute} 次/分钟）` 
+    }, 429);
+  }
+
+  try {
+    const body = await request.json();
+    const {
+      mode,
+      style,
+      locale = 'zh-CN',
+      count = 1,
+      audienceAge = 'adult',
+      intensity: reqIntensity = 'medium',
+      seed
+    } = body;
+
+    // 参数验证
+    if (!mode || !['truth', 'dare'].includes(mode)) {
+      return jsonResponse({ error: 'mode 参数无效，必须是 truth 或 dare' }, 400);
+    }
+    if (!style) {
+      return jsonResponse({ error: '缺少 style 参数' }, 400);
+    }
+    if (count < 1 || count > 20) {
+      return jsonResponse({ error: 'count 参数范围为 1-20' }, 400);
+    }
+
+    let intensity = reqIntensity;
+    if (style === '大尺度') {
+      intensity = 'hard';
+    }
+
+    const cacheParams = { mode, style, locale, audienceAge, intensity, count, seed };
+    const cacheKey = getCacheKey(cacheParams);
+
+    // 检查缓存
+    const cachedResult = getFromCache(cacheKey);
+    if (cachedResult) {
+      return jsonResponse({
+        ...cachedResult,
+        meta: {
+          ...cachedResult.meta,
+          cached: true,
+          latencyMs: Date.now() - startTime,
+          seed
+        }
+      });
+    }
+
+    // 调用 LLM
+    const rawItems = await callLLM(env, { mode, style, locale, count, audienceAge, intensity, seed });
+
+    // 内容过滤
+    const isExplicit = style === '大尺度';
+    const filteredItems = filterItems(rawItems, isExplicit);
+    const filteredCount = rawItems.length - filteredItems.length;
+
+    // 构建结果
+    const result = {
+      items: filteredItems,
+      meta: {
+        provider: env.LLM_PROVIDER || 'deepseek',
+        promptId: 'prompt-002',
+        latencyMs: Date.now() - startTime,
+        filteredCount,
+        cached: false,
+        seed
+      }
+    };
+
+    // 缓存结果
+    if (filteredItems.length > 0) {
+      setToCache(cacheKey, result);
+    }
+
+    return jsonResponse(result);
+  } catch (err) {
+    console.error('[Function] 处理请求失败:', err);
+    return jsonResponse({ 
+      error: '生成失败，请稍后再试',
+      details: err.message 
+    }, 500);
+  }
+}
+

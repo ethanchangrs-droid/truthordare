@@ -1,4 +1,10 @@
 {
+  "name": "truthordare",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build:functions": "node scripts/bundle-functions.js"
+  },
   "devDependencies": {
     "esbuild": "^0.27.2"
   }

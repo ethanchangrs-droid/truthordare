@@ -6,34 +6,92 @@
 
 | 属性 | 内容 |
 |------|------|
-| 最后更新 | 2025-12-17 18:50 |
-| 当前功能 | FEAT-023 需求变更（单题生成+大尺度风格+缓存优化） |
-| 代码状态 | ✅ 可运行 |
-| 最后 Commit | 待提交 |
+| 最后更新 | 2025-12-18 10:26 |
+| 当前功能 | FEAT-024 架构重构 + FEAT-025 题目多样性优化 |
+| 代码状态 | ✅ 可运行（backend已测试通过，functions已打包） |
+| 最后 Commit | dd18d93 |
 
 ## 本次验证
 
-- 待部署到 EdgeOne 后验证
-- 主要变更：
-  - 每次生成1题
-  - 新增"大尺度"风格（红色高亮+18+警告）
-  - 缓存使用随机数种子（1~100），约1%命中率
-  - 限流放宽到20次/分钟
-  - 禁用复制和再来一题按钮
+- ✅ Backend 引用 shared/ 测试通过
+- ✅ Functions 打包成功
+- ✅ 题目多样性测试通过（暧昧/搞笑/职场风格0重复）
+- ⏳ 待部署到 EdgeOne 验证
 
 ---
 
 ## 项目进度总览
 
-- **总功能数**: 23
-- **已完成**: 8 (FEAT-001/003/004/005/006/022/023 + 部分FEAT-002)
+- **总功能数**: 25
+- **已完成**: 10 (FEAT-001/003/004/005/006/022/023/024/025 + 部分FEAT-002)
 - **进行中**: 0
 - **待开始**: 15 (FEAT-007~021)
-- **完成率**: 31.8%
+- **完成率**: 40.0%
 
 ---
 
 ## 会话记录
+
+### 2025-12-18 会话 6 🎯 架构优化 + 题目多样性提升
+
+**执行时间**: 2025-12-18 02:00 - 10:26
+
+**问题诊断**:
+1. **题目重复严重**: 所有"暧昧"风格题目都围绕"心动"单一话题
+2. **代码重复**: Prompt 逻辑在 backend 和 functions 两处维护，修改需同步
+3. **参数硬编码**: temperature、penalty 等参数写死在代码中
+
+**解决方案**:
+1. ✅ **提取公共模块** (FEAT-024)
+   - 创建 `shared/prompt/dimensions.js` - 12种风格×8个话题维度
+   - 创建 `shared/prompt/builder.js` - Prompt 构建逻辑（单一真实源）
+   - 创建 `shared/config/llm-params.js` - LLM 参数配置（temperature=1.0, penalties=1.5/1.2）
+   - backend 直接 import shared/
+   - functions 通过 esbuild 打包 shared/
+   - 配置 `npm run build:functions` 打包命令
+
+2. ✅ **题目多样性优化** (FEAT-025)
+   - 为每种风格定义8个话题维度（如暧昧：初次见面、性吸引力、约会细节...）
+   - 优化随机数范围 1~1000（命中率降至0.1%）
+   - 实现 LRU 缓存（maxSize: 100）
+   - seed 参数传递给 LLM（加入 prompt）
+   - 提高 temperature 到 1.0
+   - 添加 frequency_penalty=1.5, presence_penalty=1.2
+
+**测试结果**:
+- ✅ 暧昧风格（10题）：0重复，涵盖6个不同维度
+- ✅ 搞笑风格（8题）：0重复，涵盖3个不同维度
+- ✅ 职场风格（5题）：0重复，话题多样
+
+**文件变更**:
+- 新增: `shared/prompt/dimensions.js`, `shared/prompt/builder.js`, `shared/config/llm-params.js`
+- 新增: `functions/api/generate-source.js` (引用 shared/)
+- 新增: `scripts/bundle-functions.js` (打包脚本)
+- 修改: `backend/src/services/llmService.js` (引用 shared/)
+- 修改: `backend/.env.example` (移除冗余参数)
+- 新增: `package.json` (打包命令)
+- 备份: `functions/api/generate-backup.js`
+
+**Git 提交**:
+- dd18d93: refactor: 提取公共模块 - prompt 和 LLM 参数统一管理
+- e2f4dca: feat: 为每种风格添加话题维度定义 - 解决题目话题单一问题
+- 8c35312: feat: 添加重复惩罚参数
+- e72ee04: feat: 提高 temperature 到 1.0
+- e660ca4: fix: 将 seed 参数传递给 LLM
+- 67c1158: feat: 优化缓存策略 - 1~1000随机数 + 100条上限
+
+**关键改进**:
+- 🎯 题目多样性从单一话题提升到8维度覆盖
+- 🔧 代码复用率100%（prompt逻辑单一真实源）
+- ⚙️ 参数配置化（便于调优）
+- 📦 打包自动化（`npm run build:functions`）
+
+**下一步**:
+- ⏳ 部署到 EdgeOne 验证
+- ⏳ 更新 docs 文档到 V1.4
+- ⏳ 提取内容过滤逻辑到 shared/filter/
+
+---
 
 ### 2025-12-17 会话 1
 
