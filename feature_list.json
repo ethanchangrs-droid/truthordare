@@ -2,7 +2,7 @@
   "project": "真心话/大冒险 LLM 生成器",
   "version": "1.4",
   "created_at": "2025-12-17",
-  "total_features": 25,
+  "total_features": 26,
   "features": [
     {
       "id": "FEAT-001",
@@ -374,6 +374,23 @@
         "端到端测试验证多样性"
       ],
       "passes": true
+    },
+    {
+      "id": "FEAT-026",
+      "title": "统一LLM响应解析逻辑",
+      "category": "架构-重构",
+      "description": "将LLM响应解析逻辑从后端和边缘函数提取到 shared/llm/parser.js，消除82行重复代码，降低维护成本",
+      "priority": "P1",
+      "steps": [
+        "创建 shared/llm/parser.js（从现有代码提取）",
+        "修改 backend/src/services/llmService.js（添加导入，删除parseResponse方法）",
+        "修改 functions/api/generate-source.js（添加导入，删除parseResponse函数）",
+        "运行 npm run build:functions 打包边缘函数",
+        "本地测试后端服务（至少3个场景）",
+        "部署并测试线上环境（至少3个场景）",
+        "循环测试50次验证稳定性"
+      ],
+      "passes": true
     }
   ],
   "summary": {
@@ -388,9 +405,9 @@
     "后端-运维": 1,
     "后端-管理": 1,
     "后端-配置": 4,
-    "架构-重构": 1,
+    "架构-重构": 2,
     "部署": 2,
     "测试": 1,
-    "total": 25
+    "total": 26
   }
 }

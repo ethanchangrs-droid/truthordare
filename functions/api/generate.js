@@ -288,6 +288,52 @@ var llmParams = {
   }
 };
 
+// shared/llm/parser.js
+function parseResponse(rawText) {
+  try {
+    let jsonString = rawText.trim();
+    jsonString = jsonString.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
+    jsonString = jsonString.replace(/^\s*\{\s*\[/, "[").replace(/\]\s*\}\s*$/, "]");
+    const jsonMatch = jsonString.match(/\[([\s\S]*)\]/);
+    if (jsonMatch) {
+      jsonString = `[${jsonMatch[1]}]`;
+    }
+    try {
+      const items = JSON.parse(jsonString);
+      if (Array.isArray(items) && items.length > 0 && items[0].text) {
+        return items.map((item, index) => ({
+          id: `gen-${Date.now()}-${index}`,
+          type: item.type,
+          text: item.text
+        }));
+      }
+    } catch (parseError) {
+      console.warn("[LLM] JSON\u89E3\u6790\u5931\u8D25\uFF0C\u5C1D\u8BD5\u624B\u52A8\u63D0\u53D6:", parseError.message);
+    }
+    const typeMatch = jsonString.match(/[""\u201C\u201D]type[""\u201C\u201D]\s*:\s*[""\u201C\u201D]?(truth|dare)[""\u201C\u201D]?/i);
+    if (!typeMatch) {
+      throw new Error("\u65E0\u6CD5\u63D0\u53D6 type \u5B57\u6BB5");
+    }
+    const textFieldMatch = jsonString.match(/[""\u201C\u201D]text[""\u201C\u201D]\s*:\s*[""\u201C\u201D]/);
+    if (!textFieldMatch) {
+      throw new Error("\u65E0\u6CD5\u63D0\u53D6 text \u5B57\u6BB5");
+    }
+    const textValueStart = jsonString.indexOf(textFieldMatch[0]) + textFieldMatch[0].length;
+    let textContent = jsonString.substring(textValueStart);
+    textContent = textContent.replace(/[""\u201C\u201D]\s*\}[\s\}\]]*$/, "");
+    textContent = textContent.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+    console.log("[LLM] \u624B\u52A8\u63D0\u53D6\u6210\u529F");
+    return [{
+      id: `gen-${Date.now()}-0`,
+      type: typeMatch[1],
+      text: textContent
+    }];
+  } catch (err) {
+    console.error("[LLM] \u89E3\u6790\u54CD\u5E94\u5931\u8D25:", rawText.substring(0, 300), "...\u9519\u8BEF:", err.message);
+    throw new Error(`LLM\u54CD\u5E94\u89E3\u6790\u5931\u8D25: ${err.message}`);
+  }
+}
+
 // functions/api/generate-source.js
 var SENSITIVE_WORDS = [
   // 违法相关（保留）
@@ -352,51 +398,6 @@ function containsSensitive(text, isExplicit = false) {
 }
 function filterItems(items, isExplicit = false) {
   return items.filter((item) => !containsSensitive(item.text, isExplicit));
-}
-function parseResponse(rawText) {
-  try {
-    let jsonString = rawText.trim();
-    jsonString = jsonString.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
-    jsonString = jsonString.replace(/^\s*\{\s*\[/, "[").replace(/\]\s*\}\s*$/, "]");
-    const jsonMatch = jsonString.match(/\[([\s\S]*)\]/);
-    if (jsonMatch) {
-      jsonString = `[${jsonMatch[1]}]`;
-    }
-    try {
-      const items = JSON.parse(jsonString);
-      if (Array.isArray(items) && items.length > 0 && items[0].text) {
-        return items.map((item, index) => ({
-          id: `gen-${Date.now()}-${index}`,
-          type: item.type,
-          text: item.text
-        }));
-      }
-    } catch (parseError) {
-      console.warn("[LLM] JSON\u89E3\u6790\u5931\u8D25\uFF0C\u5C1D\u8BD5\u624B\u52A8\u63D0\u53D6:", parseError.message);
-    }
-    const typeMatch = jsonString.match(/[""\u201C\u201D]type[""\u201C\u201D]\s*:\s*[""\u201C\u201D]?(truth|dare)[""\u201C\u201D]?/i);
-    if (!typeMatch) {
-      throw new Error("\u65E0\u6CD5\u63D0\u53D6 type \u5B57\u6BB5");
-    }
-    const textFieldMatch = jsonString.match(/[""\u201C\u201D]text[""\u201C\u201D]\s*:\s*[""\u201C\u201D]/);
-    if (!textFieldMatch) {
-      throw new Error("\u65E0\u6CD5\u63D0\u53D6 text \u5B57\u6BB5");
-    }
-    const textValueStart = jsonString.indexOf(textFieldMatch[0]) + textFieldMatch[0].length;
-    let textContent = jsonString.substring(textValueStart);
-    textContent = textContent.replace(/[""\u201C\u201D]\s*\}[\s\}\]]*$/, "");
-    textContent = textContent.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
-    console.log("[LLM] \u624B\u52A8\u63D0\u53D6\u6210\u529F");
-    return [{
-      id: `gen-${Date.now()}-0`,
-      type: typeMatch[1],
-      text: textContent
-    }];
-  } catch (err) {
-    console.error("[LLM] \u89E3\u6790\u54CD\u5E94\u5931\u8D25:", rawText.substring(0, 300), "...\u9519\u8BEF:", err.message);
-    const preview = rawText.substring(0, 100).replace(/[\n\r]/g, "\\n");
-    throw new Error(`LLM\u54CD\u5E94\u89E3\u6790\u5931\u8D25: ${err.message} [\u539F\u59CB\u54CD\u5E94: ${preview}...]`);
-  }
 }
 async function callLLM(env, { mode, style, locale, count, audienceAge, intensity, seed }) {
   const provider = env.LLM_PROVIDER || "deepseek";
