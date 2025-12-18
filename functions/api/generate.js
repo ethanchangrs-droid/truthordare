@@ -285,6 +285,22 @@ var llmParams = {
   rateLimit: {
     perMinute: 20
     // 每分钟最大请求次数
+  },
+  // ⏱️ 超时与重试配置
+  // Bug修复：网络异常 peer_error - 添加超时控制和自动重试
+  // 原因：无超时导致连接挂起，无重试导致瞬时网络故障直接失败
+  // 解决方案：30秒超时 + 最多3次重试 + 指数退避
+  timeout: 3e4,
+  // 超时时间（毫秒）- 30秒
+  retry: {
+    maxAttempts: 3,
+    // 最多重试次数
+    initialDelay: 1e3,
+    // 初始延迟（毫秒）
+    maxDelay: 5e3,
+    // 最大延迟（毫秒）
+    backoffMultiplier: 2
+    // 指数退避倍数
   }
 };
 
@@ -417,31 +433,97 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
   if (!apiKey) {
     throw new Error(`\u672A\u914D\u7F6E ${provider.toUpperCase()}_API_KEY \u73AF\u5883\u53D8\u91CF`);
   }
-  const response = await fetch(apiUrl, {
+  const requestBody = {
+    model,
+    messages: [
+      { role: "system", content: prompt.system },
+      { role: "user", content: prompt.user }
+    ],
+    temperature: llmParams.temperature,
+    max_tokens: llmParams.maxTokens,
+    frequency_penalty: llmParams.frequencyPenalty,
+    presence_penalty: llmParams.presencePenalty
+  };
+  return await fetchWithRetry(apiUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: prompt.system },
-        { role: "user", content: prompt.user }
-      ],
-      temperature: llmParams.temperature,
-      max_tokens: llmParams.maxTokens,
-      frequency_penalty: llmParams.frequencyPenalty,
-      presence_penalty: llmParams.presencePenalty
-    })
+    body: JSON.stringify(requestBody)
   });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`LLM API \u8C03\u7528\u5931\u8D25: ${response.status} ${errorText}`);
+}
+async function fetchWithRetry(url, options) {
+  const { maxAttempts, initialDelay, maxDelay, backoffMultiplier } = llmParams.retry;
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), llmParams.timeout);
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`LLM API \u8C03\u7528\u5931\u8D25: ${response.status} ${errorText}`);
+      }
+      const data = await response.json();
+      const rawText = data.choices?.[0]?.message?.content?.trim() || "";
+      return parseResponse(rawText);
+    } catch (error) {
+      lastError = error;
+      const isRetryable = isRetryableError(error);
+      const isLastAttempt = attempt === maxAttempts;
+      if (!isRetryable || isLastAttempt) {
+        throw error;
+      }
+      const delay = Math.min(
+        initialDelay * Math.pow(backoffMultiplier, attempt - 1),
+        maxDelay
+      );
+      console.log(`[LLM] \u7B2C ${attempt} \u6B21\u8C03\u7528\u5931\u8D25\uFF08${error.message}\uFF09\uFF0C${delay}ms \u540E\u91CD\u8BD5...`);
+      await sleep(delay);
+    }
   }
-  const data = await response.json();
-  const rawText = data.choices?.[0]?.message?.content?.trim() || "";
-  return parseResponse(rawText);
+  throw lastError;
+}
+function isRetryableError(error) {
+  const errorMsg = error.message?.toLowerCase() || "";
+  const errorName = error.name?.toLowerCase() || "";
+  const retryablePatterns = [
+    "timeout",
+    "abort",
+    "network",
+    "fetch",
+    "econnreset",
+    "econnrefused",
+    "peer_error",
+    "socket",
+    "502",
+    "503",
+    "504"
+  ];
+  const nonRetryablePatterns = [
+    "400",
+    "401",
+    "403",
+    "429",
+    "api key",
+    "invalid"
+  ];
+  if (nonRetryablePatterns.some(
+    (pattern) => errorMsg.includes(pattern) || errorName.includes(pattern)
+  )) {
+    return false;
+  }
+  return retryablePatterns.some(
+    (pattern) => errorMsg.includes(pattern) || errorName.includes(pattern)
+  );
+}
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 var cache = /* @__PURE__ */ new Map();
 function getCacheKey({ mode, style, seed }) {

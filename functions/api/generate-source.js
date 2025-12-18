@@ -59,7 +59,14 @@ function filterItems(items, isExplicit = false) {
 }
 
 /**
- * 调用 LLM API
+ * 调用 LLM API（带超时和重试）
+ * 
+ * Bug修复：添加超时控制和自动重试机制
+ * 原因：网络不稳定时出现 peer_error、超时等错误，导致生成失败
+ * 解决方案：
+ * 1. 使用 AbortController 实现 30 秒超时
+ * 2. 实现自动重试（最多3次）+ 指数退避
+ * 3. 区分可重试错误和不可重试错误
  */
 async function callLLM(env, { mode, style, locale, count, audienceAge, intensity, seed }) {
   const provider = env.LLM_PROVIDER || 'deepseek';
@@ -83,34 +90,137 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
     throw new Error(`未配置 ${provider.toUpperCase()}_API_KEY 环境变量`);
   }
 
-  const response = await fetch(apiUrl, {
+  const requestBody = {
+    model,
+    messages: [
+      { role: 'system', content: prompt.system },
+      { role: 'user', content: prompt.user }
+    ],
+    temperature: llmParams.temperature,
+    max_tokens: llmParams.maxTokens,
+    frequency_penalty: llmParams.frequencyPenalty,
+    presence_penalty: llmParams.presencePenalty
+  };
+
+  // 使用重试逻辑
+  return await fetchWithRetry(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: prompt.system },
-        { role: 'user', content: prompt.user }
-      ],
-      temperature: llmParams.temperature,
-      max_tokens: llmParams.maxTokens,
-      frequency_penalty: llmParams.frequencyPenalty,
-      presence_penalty: llmParams.presencePenalty
-    })
+    body: JSON.stringify(requestBody)
   });
+}
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`LLM API 调用失败: ${response.status} ${errorText}`);
+/**
+ * 带超时和重试的 fetch 封装
+ * 
+ * @param {string} url - API URL
+ * @param {object} options - fetch 选项
+ * @returns {Promise<Array>} 解析后的题目数组
+ */
+async function fetchWithRetry(url, options) {
+  const { maxAttempts, initialDelay, maxDelay, backoffMultiplier } = llmParams.retry;
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      // 创建 AbortController 实现超时
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), llmParams.timeout);
+
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`LLM API 调用失败: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      const rawText = data.choices?.[0]?.message?.content?.trim() || '';
+      
+      return parseResponse(rawText);
+    } catch (error) {
+      lastError = error;
+      
+      // 判断是否为可重试错误
+      const isRetryable = isRetryableError(error);
+      const isLastAttempt = attempt === maxAttempts;
+
+      if (!isRetryable || isLastAttempt) {
+        throw error;
+      }
+
+      // 计算退避延迟
+      const delay = Math.min(
+        initialDelay * Math.pow(backoffMultiplier, attempt - 1),
+        maxDelay
+      );
+
+      console.log(`[LLM] 第 ${attempt} 次调用失败（${error.message}），${delay}ms 后重试...`);
+      await sleep(delay);
+    }
   }
 
-  const data = await response.json();
-  const rawText = data.choices?.[0]?.message?.content?.trim() || '';
-  
-  return parseResponse(rawText);
+  throw lastError;
+}
+
+/**
+ * 判断错误是否可重试
+ */
+function isRetryableError(error) {
+  const errorMsg = error.message?.toLowerCase() || '';
+  const errorName = error.name?.toLowerCase() || '';
+
+  // 网络相关错误（可重试）
+  const retryablePatterns = [
+    'timeout',
+    'abort',
+    'network',
+    'fetch',
+    'econnreset',
+    'econnrefused',
+    'peer_error',
+    'socket',
+    '502',
+    '503',
+    '504'
+  ];
+
+  // 业务逻辑错误（不可重试）
+  const nonRetryablePatterns = [
+    '400',
+    '401',
+    '403',
+    '429',
+    'api key',
+    'invalid'
+  ];
+
+  // 先检查不可重试
+  if (nonRetryablePatterns.some(pattern => 
+    errorMsg.includes(pattern) || errorName.includes(pattern)
+  )) {
+    return false;
+  }
+
+  // 再检查可重试
+  return retryablePatterns.some(pattern => 
+    errorMsg.includes(pattern) || errorName.includes(pattern)
+  );
+}
+
+/**
+ * 休眠指定毫秒数
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**

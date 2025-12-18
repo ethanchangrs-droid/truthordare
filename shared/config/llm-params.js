@@ -37,6 +37,18 @@ export const llmParams = {
   // 🚦 限流配置
   rateLimit: {
     perMinute: 20            // 每分钟最大请求次数
+  },
+  
+  // ⏱️ 超时与重试配置
+  // Bug修复：网络异常 peer_error - 添加超时控制和自动重试
+  // 原因：无超时导致连接挂起，无重试导致瞬时网络故障直接失败
+  // 解决方案：30秒超时 + 最多3次重试 + 指数退避
+  timeout: 30000,            // 超时时间（毫秒）- 30秒
+  retry: {
+    maxAttempts: 3,          // 最多重试次数
+    initialDelay: 1000,      // 初始延迟（毫秒）
+    maxDelay: 5000,          // 最大延迟（毫秒）
+    backoffMultiplier: 2     // 指数退避倍数
   }
 };
 
