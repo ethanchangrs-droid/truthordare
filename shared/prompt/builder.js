@@ -23,9 +23,9 @@ import { getDimensionHint, styleDimensions } from './dimensions.js';
 export function buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed }) {
   const isExplicit = style === '大尺度';
   
-  // 基于 seed 确定本次使用的维度（确保同一 seed 对应同一维度）
+  // 代码层面随机选取一个话题维度，而不是让 LLM 自己选择
   const dimensions = styleDimensions[style] || [];
-  const targetDimensionIndex = dimensions.length > 0 ? (seed % dimensions.length) : null;
+  const targetDimensionIndex = dimensions.length > 0 ? Math.floor(Math.random() * dimensions.length) : null;
   const targetDimension = targetDimensionIndex !== null ? dimensions[targetDimensionIndex] : null;
   
   const dimensionHint = getDimensionHint(style);

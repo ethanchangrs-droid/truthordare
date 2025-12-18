@@ -12,7 +12,8 @@ var styleDimensions = {
     "\u66A7\u6627\u7684\u80A2\u4F53\u8BED\u8A00",
     "\u6027\u5438\u5F15\u529B",
     "\u6D6A\u6F2B\u5E7B\u60F3",
-    "\u4EB2\u5BC6\u5173\u7CFB\u8FB9\u754C"
+    "\u4EB2\u5BC6\u5173\u7CFB\u8FB9\u754C",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u641E\u7B11": [
     "\u5C34\u5C2C\u7CD7\u4E8B",
@@ -22,7 +23,8 @@ var styleDimensions = {
     "\u793E\u6B7B\u77AC\u95F4",
     "\u6076\u641E\u6311\u6218",
     "\u8352\u8BDE\u60F3\u8C61",
-    "\u6C99\u96D5\u884C\u4E3A"
+    "\u6C99\u96D5\u884C\u4E3A",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u793E\u725B": [
     "\u5927\u80C6\u642D\u8BAA",
@@ -32,7 +34,8 @@ var styleDimensions = {
     "\u964C\u751F\u4EBA\u4E92\u52A8",
     "\u81EA\u6211\u5C55\u793A",
     "\u7834\u51B0\u6E38\u620F",
-    "\u52C7\u6562\u8868\u8FBE"
+    "\u52C7\u6562\u8868\u8FBE",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u804C\u573A": [
     "\u804C\u573A\u653F\u6CBB",
@@ -42,7 +45,8 @@ var styleDimensions = {
     "\u5DE5\u4F5C\u5931\u8BEF",
     "\u529E\u516C\u5BA4\u604B\u60C5",
     "\u8DF3\u69FD\u7ECF\u5386",
-    "\u804C\u573A\u56F0\u5883"
+    "\u804C\u573A\u56F0\u5883",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u9152\u5C40": [
     "\u9152\u91CF\u7CD7\u4E8B",
@@ -52,7 +56,8 @@ var styleDimensions = {
     "\u9152\u684C\u89C4\u77E9",
     "\u9189\u9152\u7ECF\u5386",
     "\u62FC\u9152\u6311\u6218",
-    "\u9152\u540E\u771F\u8BDD"
+    "\u9152\u540E\u771F\u8BDD",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u5BB6\u5EAD": [
     "\u7236\u6BCD\u5173\u7CFB",
@@ -62,7 +67,8 @@ var styleDimensions = {
     "\u5BB6\u65CF\u4F20\u7EDF",
     "\u4EE3\u9645\u51B2\u7A81",
     "\u4EB2\u60C5\u65F6\u523B",
-    "\u5BB6\u5EAD\u8D23\u4EFB"
+    "\u5BB6\u5EAD\u8D23\u4EFB",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u70E7\u8111": [
     "\u903B\u8F91\u63A8\u7406",
@@ -72,7 +78,8 @@ var styleDimensions = {
     "\u4EF7\u503C\u9009\u62E9",
     "\u5FC3\u7406\u6D4B\u8BD5",
     "\u667A\u529B\u6311\u6218",
-    "\u6DF1\u5EA6\u8FFD\u95EE"
+    "\u6DF1\u5EA6\u8FFD\u95EE",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u6781\u9650": [
     "\u6050\u9AD8\u6311\u6218",
@@ -82,7 +89,8 @@ var styleDimensions = {
     "\u5192\u9669\u7ECF\u5386",
     "\u751F\u5B58\u8003\u9A8C",
     "\u52C7\u6C14\u6D4B\u8BD5",
-    "\u7A81\u7834\u8212\u9002\u533A"
+    "\u7A81\u7834\u8212\u9002\u533A",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u6D3E\u5BF9": [
     "\u6E38\u620F\u4E92\u52A8",
@@ -92,7 +100,8 @@ var styleDimensions = {
     "\u8282\u594F\u6311\u6218",
     "\u89D2\u8272\u626E\u6F14",
     "\u96C6\u4F53\u60E9\u7F5A",
-    "\u70ED\u573A\u6D3B\u52A8"
+    "\u70ED\u573A\u6D3B\u52A8",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u6E29\u60C5": [
     "\u611F\u6069\u65F6\u523B",
@@ -102,7 +111,8 @@ var styleDimensions = {
     "\u5FC3\u7075\u6210\u957F",
     "\u771F\u8BDA\u8868\u8FBE",
     "\u60C5\u611F\u652F\u6301",
-    "\u7F8E\u597D\u613F\u671B"
+    "\u7F8E\u597D\u613F\u671B",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u5927\u5C3A\u5EA6": [
     "\u6027\u7ECF\u5386",
@@ -112,7 +122,8 @@ var styleDimensions = {
     "\u4EB2\u5BC6\u63A5\u89E6",
     "\u6027\u8BDD\u9898",
     "\u5927\u80C6\u8868\u767D",
-    "\u7981\u5FCC\u8FB9\u7F18"
+    "\u7981\u5FCC\u8FB9\u7F18",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u5C11\u513F\u9002\u5B9C": [
     "\u6821\u56ED\u8DA3\u4E8B",
@@ -122,7 +133,8 @@ var styleDimensions = {
     "\u624D\u827A\u5C55\u793A",
     "\u53CB\u8C0A\u6545\u4E8B",
     "\u68A6\u60F3\u5206\u4EAB",
-    "\u521B\u610F\u60F3\u8C61"
+    "\u521B\u610F\u60F3\u8C61",
+    "\u4E2A\u4EBA\u559C\u597D"
   ],
   "\u6B63\u5E38": [
     "\u751F\u6D3B\u7ECF\u5386",
@@ -132,7 +144,8 @@ var styleDimensions = {
     "\u672A\u6765\u89C4\u5212",
     "\u4EF7\u503C\u89C2\u5FF5",
     "\u60C5\u611F\u8868\u8FBE",
-    "\u793E\u4EA4\u4E92\u52A8"
+    "\u793E\u4EA4\u4E92\u52A8",
+    "\u4E2A\u4EBA\u559C\u597D"
   ]
 };
 function getDimensionHint(style) {
@@ -148,7 +161,7 @@ function getDimensionHint(style) {
 function buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed }) {
   const isExplicit = style === "\u5927\u5C3A\u5EA6";
   const dimensions = styleDimensions[style] || [];
-  const targetDimensionIndex = dimensions.length > 0 ? seed % dimensions.length : null;
+  const targetDimensionIndex = dimensions.length > 0 ? Math.floor(Math.random() * dimensions.length) : null;
   const targetDimension = targetDimensionIndex !== null ? dimensions[targetDimensionIndex] : null;
   const dimensionHint = getDimensionHint(style);
   let systemPrompt;
