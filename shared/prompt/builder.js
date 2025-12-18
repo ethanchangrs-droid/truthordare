@@ -6,7 +6,7 @@
  * - functions/api/generate.js (通过打包)
  */
 
-import { getDimensionHint } from './dimensions.js';
+import { getDimensionHint, styleDimensions } from './dimensions.js';
 
 /**
  * 构建 LLM Prompt
@@ -22,6 +22,12 @@ import { getDimensionHint } from './dimensions.js';
  */
 export function buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed }) {
   const isExplicit = style === '大尺度';
+  
+  // 基于 seed 确定本次使用的维度（确保同一 seed 对应同一维度）
+  const dimensions = styleDimensions[style] || [];
+  const targetDimensionIndex = dimensions.length > 0 ? (seed % dimensions.length) : null;
+  const targetDimension = targetDimensionIndex !== null ? dimensions[targetDimensionIndex] : null;
+  
   const dimensionHint = getDimensionHint(style);
 
   let systemPrompt;
@@ -53,11 +59,22 @@ export function buildPrompt({ mode, style, locale, count, audienceAge, intensity
 `;
   }
 
-  const userPrompt = `
+  // 构建 userPrompt，明确指定本次使用的维度
+  let userPrompt = `
 语言：${locale}；模式：${mode}；风格：${style}；数量：${count}
-受众年龄：${audienceAge}；尺度：${intensity}；题目编号：${seed || 'N/A'}${dimensionHint}
-请生成 ${count} 条符合要求的内容，严格遵守 JSON 格式。
-`;
+受众年龄：${audienceAge}；尺度：${intensity}；题目编号：${seed || 'N/A'}`;
+
+  if (targetDimension) {
+    userPrompt += `\n\n🎯 本次核心话题维度：【${targetDimension}】
+⚠️ 请严格围绕"${targetDimension}"这个维度设计题目内容，不要偏离到其他维度。
+如果维度是"童年趣事"，就不要设计成"模仿表演"；
+如果维度是"尴尬糗事"，就设计回忆尴尬经历的问题或任务，而不是表演类。
+每个维度都有独特的表达方式，请充分发挥创意。`;
+  } else if (dimensionHint) {
+    userPrompt += dimensionHint;
+  }
+
+  userPrompt += `\n\n请生成 ${count} 条符合要求的内容，严格遵守 JSON 格式。`;
 
   return {
     system: systemPrompt.trim(),

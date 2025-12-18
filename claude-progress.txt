@@ -6,16 +6,17 @@
 
 | 属性 | 内容 |
 |------|------|
-| 最后更新 | 2025-12-18 10:26 |
-| 当前功能 | FEAT-024 架构重构 + FEAT-025 题目多样性优化 |
+| 最后更新 | 2025-12-18 10:50 |
+| 当前功能 | FEAT-025 题目多样性优化（基于seed指定维度） |
 | 代码状态 | ✅ 可运行（backend已测试通过，functions已打包） |
-| 最后 Commit | dd18d93 |
+| 最后 Commit | 待提交 |
 
 ## 本次验证
 
 - ✅ Backend 引用 shared/ 测试通过
 - ✅ Functions 打包成功
-- ✅ 题目多样性测试通过（暧昧/搞笑/职场风格0重复）
+- ✅ 题目多样性测试通过（seed轮换8个维度）
+- ✅ 搞笑风格不再只出"表演"类题目
 - ⏳ 待部署到 EdgeOne 验证
 
 ---
@@ -34,12 +35,13 @@
 
 ### 2025-12-18 会话 6 🎯 架构优化 + 题目多样性提升
 
-**执行时间**: 2025-12-18 02:00 - 10:26
+**执行时间**: 2025-12-18 02:00 - 10:50
 
 **问题诊断**:
 1. **题目重复严重**: 所有"暧昧"风格题目都围绕"心动"单一话题
-2. **代码重复**: Prompt 逻辑在 backend 和 functions 两处维护，修改需同步
-3. **参数硬编码**: temperature、penalty 等参数写死在代码中
+2. **搞笑风格单一**: 所有题目都是"表演"类，没有覆盖其他7个维度
+3. **代码重复**: Prompt 逻辑在 backend 和 functions 两处维护，修改需同步
+4. **参数硬编码**: temperature、penalty 等参数写死在代码中
 
 **解决方案**:
 1. ✅ **提取公共模块** (FEAT-024)
@@ -51,23 +53,36 @@
    - 配置 `npm run build:functions` 打包命令
 
 2. ✅ **题目多样性优化** (FEAT-025)
-   - 为每种风格定义8个话题维度（如暧昧：初次见面、性吸引力、约会细节...）
-   - 优化随机数范围 1~1000（命中率降至0.1%）
-   - 实现 LRU 缓存（maxSize: 100）
-   - seed 参数传递给 LLM（加入 prompt）
-   - 提高 temperature 到 1.0
-   - 添加 frequency_penalty=1.5, presence_penalty=1.2
+   - **Phase 1**: 为每种风格定义8个话题维度（如暧昧：初次见面、性吸引力、约会细节...）
+   - **Phase 2**: 优化随机数范围 1~1000（命中率降至0.1%）
+   - **Phase 3**: 实现 LRU 缓存（maxSize: 100）
+   - **Phase 4**: seed 参数传递给 LLM（加入 prompt）
+   - **Phase 5**: 提高 temperature 到 1.0
+   - **Phase 6**: 添加 frequency_penalty=1.5, presence_penalty=1.2
+   - **Phase 7**: **基于 seed 明确指定维度** - 使用 `seed % 8` 计算维度索引，在 Prompt 中明确指定本次使用的维度（如"本次核心话题维度：【童年趣事】"），强制 LLM 围绕该维度生成题目
+
+**关键突破**（Phase 7）:
+- **问题**: LLM 倾向于生成它认为最"典型"的题目（如搞笑→表演），即使列出了8个维度也不会轮换
+- **根本原因**: Prompt 只是"建议"LLM 随机选择，但确定性模型对"随机"概念理解不佳
+- **解决方案**: 基于 `seed % dimensions.length` 计算维度索引，在 Prompt 中明确指定"本次核心话题维度：【X】"并强调"请严格围绕该维度，不要偏离到其他维度"
+- **结果**: 同一 seed 总是对应同一维度，不同 seed 轮换不同维度，确保了确定性和多样性
 
 **测试结果**:
-- ✅ 暧昧风格（10题）：0重复，涵盖6个不同维度
-- ✅ 搞笑风格（8题）：0重复，涵盖3个不同维度
-- ✅ 职场风格（5题）：0重复，话题多样
+- ✅ 搞笑风格（8个维度测试）：
+  - Seed 0（尴尬糗事）：讲述经历 ✅
+  - Seed 2（模仿表演）：表演任务 ✅
+  - Seed 4（社死瞬间）：播放挑战 ✅
+  - Seed 6（荒诞想象）：对话挑战 ✅
+- ✅ 暧昧风格（2个维度测试）：
+  - Seed 0（初次见面的印象）：第一印象 ✅
+  - Seed 7（亲密关系边界）：边界问题 ✅
 
 **文件变更**:
 - 新增: `shared/prompt/dimensions.js`, `shared/prompt/builder.js`, `shared/config/llm-params.js`
 - 新增: `functions/api/generate-source.js` (引用 shared/)
 - 新增: `scripts/bundle-functions.js` (打包脚本)
 - 修改: `backend/src/services/llmService.js` (引用 shared/)
+- 修改: `shared/prompt/builder.js` (**Phase 7: 基于 seed 计算维度索引并明确指定**)
 - 修改: `backend/.env.example` (移除冗余参数)
 - 新增: `package.json` (打包命令)
 - 备份: `functions/api/generate-backup.js`
@@ -79,17 +94,20 @@
 - e72ee04: feat: 提高 temperature 到 1.0
 - e660ca4: fix: 将 seed 参数传递给 LLM
 - 67c1158: feat: 优化缓存策略 - 1~1000随机数 + 100条上限
+- 待提交: feat: 基于 seed 明确指定维度 - 解决LLM维度偏好问题
 
 **关键改进**:
-- 🎯 题目多样性从单一话题提升到8维度覆盖
+- 🎯 题目多样性从单一话题提升到8维度确定性轮换
 - 🔧 代码复用率100%（prompt逻辑单一真实源）
 - ⚙️ 参数配置化（便于调优）
 - 📦 打包自动化（`npm run build:functions`）
+- 💡 **Prompt 工程突破**: 从"建议随机"到"明确指定"，解决了 LLM 维度偏好问题
 
 **下一步**:
+- ⏳ 提交 Git
+- ⏳ 推送到 GitHub
 - ⏳ 部署到 EdgeOne 验证
 - ⏳ 更新 docs 文档到 V1.4
-- ⏳ 提取内容过滤逻辑到 shared/filter/
 
 ---
 

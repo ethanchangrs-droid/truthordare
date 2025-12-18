@@ -137,6 +137,9 @@ function getDimensionHint(style) {
 // shared/prompt/builder.js
 function buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed }) {
   const isExplicit = style === "\u5927\u5C3A\u5EA6";
+  const dimensions = styleDimensions[style] || [];
+  const targetDimensionIndex = dimensions.length > 0 ? seed % dimensions.length : null;
+  const targetDimension = targetDimensionIndex !== null ? dimensions[targetDimensionIndex] : null;
   const dimensionHint = getDimensionHint(style);
   let systemPrompt;
   if (isExplicit) {
@@ -165,11 +168,23 @@ function buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed 
 ]
 `;
   }
-  const userPrompt = `
+  let userPrompt = `
 \u8BED\u8A00\uFF1A${locale}\uFF1B\u6A21\u5F0F\uFF1A${mode}\uFF1B\u98CE\u683C\uFF1A${style}\uFF1B\u6570\u91CF\uFF1A${count}
-\u53D7\u4F17\u5E74\u9F84\uFF1A${audienceAge}\uFF1B\u5C3A\u5EA6\uFF1A${intensity}\uFF1B\u9898\u76EE\u7F16\u53F7\uFF1A${seed || "N/A"}${dimensionHint}
-\u8BF7\u751F\u6210 ${count} \u6761\u7B26\u5408\u8981\u6C42\u7684\u5185\u5BB9\uFF0C\u4E25\u683C\u9075\u5B88 JSON \u683C\u5F0F\u3002
-`;
+\u53D7\u4F17\u5E74\u9F84\uFF1A${audienceAge}\uFF1B\u5C3A\u5EA6\uFF1A${intensity}\uFF1B\u9898\u76EE\u7F16\u53F7\uFF1A${seed || "N/A"}`;
+  if (targetDimension) {
+    userPrompt += `
+
+\u{1F3AF} \u672C\u6B21\u6838\u5FC3\u8BDD\u9898\u7EF4\u5EA6\uFF1A\u3010${targetDimension}\u3011
+\u26A0\uFE0F \u8BF7\u4E25\u683C\u56F4\u7ED5"${targetDimension}"\u8FD9\u4E2A\u7EF4\u5EA6\u8BBE\u8BA1\u9898\u76EE\u5185\u5BB9\uFF0C\u4E0D\u8981\u504F\u79BB\u5230\u5176\u4ED6\u7EF4\u5EA6\u3002
+\u5982\u679C\u7EF4\u5EA6\u662F"\u7AE5\u5E74\u8DA3\u4E8B"\uFF0C\u5C31\u4E0D\u8981\u8BBE\u8BA1\u6210"\u6A21\u4EFF\u8868\u6F14"\uFF1B
+\u5982\u679C\u7EF4\u5EA6\u662F"\u5C34\u5C2C\u7CD7\u4E8B"\uFF0C\u5C31\u8BBE\u8BA1\u56DE\u5FC6\u5C34\u5C2C\u7ECF\u5386\u7684\u95EE\u9898\u6216\u4EFB\u52A1\uFF0C\u800C\u4E0D\u662F\u8868\u6F14\u7C7B\u3002
+\u6BCF\u4E2A\u7EF4\u5EA6\u90FD\u6709\u72EC\u7279\u7684\u8868\u8FBE\u65B9\u5F0F\uFF0C\u8BF7\u5145\u5206\u53D1\u6325\u521B\u610F\u3002`;
+  } else if (dimensionHint) {
+    userPrompt += dimensionHint;
+  }
+  userPrompt += `
+
+\u8BF7\u751F\u6210 ${count} \u6761\u7B26\u5408\u8981\u6C42\u7684\u5185\u5BB9\uFF0C\u4E25\u683C\u9075\u5B88 JSON \u683C\u5F0F\u3002`;
   return {
     system: systemPrompt.trim(),
     user: userPrompt.trim()
