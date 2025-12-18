@@ -86,8 +86,10 @@ export function parseResponse(rawText) {
     }];
       
   } catch (err) {
-    console.error('[LLM] 解析响应失败:', rawText.substring(0, 300), '...错误:', err.message);
-    throw new Error(`LLM响应解析失败: ${err.message}`);
+    const rawSample = rawText.substring(0, 500);
+    console.error('[LLM] 解析响应失败:', rawSample, '...错误:', err.message);
+    // ⚠️ 临时调试：在错误消息中包含原始响应样本
+    throw new Error(`LLM响应解析失败: ${err.message} [原始响应: ${rawSample}...]`);
   }
 }
 
