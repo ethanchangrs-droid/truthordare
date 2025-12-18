@@ -80,9 +80,15 @@ export function buildPrompt({ mode, style, locale, count, audienceAge, intensity
 生成题目的场景和话题要多变，避免单一重复，努力让派对持续升温和有趣。
 确保语言简洁，任务可执行。
 
+⚠️ 重要格式要求：
+- 题目内容中不要使用双引号(")，可以用单引号(')、书名号(《》)或直接省略引号
+- 避免使用可能破坏 JSON 格式的特殊字符
+
 ${modeInstruction}
 
 输出格式为严格的 JSON 数组，每项包含 type（${mode}）与 text（题目内容）。
+⚠️ 特别注意：text 字段的内容中不能出现双引号(")，否则会导致 JSON 解析失败。
+
 示例：
 [
   {"type": "${mode}", "text": "${mode === 'truth' ? '你最大胆的一次约会经历是什么？' : '选一个人，用眼神对视30秒不许笑'}"}

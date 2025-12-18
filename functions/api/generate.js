@@ -206,9 +206,15 @@ function buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed 
 \u751F\u6210\u9898\u76EE\u7684\u573A\u666F\u548C\u8BDD\u9898\u8981\u591A\u53D8\uFF0C\u907F\u514D\u5355\u4E00\u91CD\u590D\uFF0C\u52AA\u529B\u8BA9\u6D3E\u5BF9\u6301\u7EED\u5347\u6E29\u548C\u6709\u8DA3\u3002
 \u786E\u4FDD\u8BED\u8A00\u7B80\u6D01\uFF0C\u4EFB\u52A1\u53EF\u6267\u884C\u3002
 
+\u26A0\uFE0F \u91CD\u8981\u683C\u5F0F\u8981\u6C42\uFF1A
+- \u9898\u76EE\u5185\u5BB9\u4E2D\u4E0D\u8981\u4F7F\u7528\u53CC\u5F15\u53F7(")\uFF0C\u53EF\u4EE5\u7528\u5355\u5F15\u53F7(')\u3001\u4E66\u540D\u53F7(\u300A\u300B)\u6216\u76F4\u63A5\u7701\u7565\u5F15\u53F7
+- \u907F\u514D\u4F7F\u7528\u53EF\u80FD\u7834\u574F JSON \u683C\u5F0F\u7684\u7279\u6B8A\u5B57\u7B26
+
 ${modeInstruction}
 
 \u8F93\u51FA\u683C\u5F0F\u4E3A\u4E25\u683C\u7684 JSON \u6570\u7EC4\uFF0C\u6BCF\u9879\u5305\u542B type\uFF08${mode}\uFF09\u4E0E text\uFF08\u9898\u76EE\u5185\u5BB9\uFF09\u3002
+\u26A0\uFE0F \u7279\u522B\u6CE8\u610F\uFF1Atext \u5B57\u6BB5\u7684\u5185\u5BB9\u4E2D\u4E0D\u80FD\u51FA\u73B0\u53CC\u5F15\u53F7(")\uFF0C\u5426\u5219\u4F1A\u5BFC\u81F4 JSON \u89E3\u6790\u5931\u8D25\u3002
+
 \u793A\u4F8B\uFF1A
 [
   {"type": "${mode}", "text": "${mode === "truth" ? "\u4F60\u6700\u5927\u80C6\u7684\u4E00\u6B21\u7EA6\u4F1A\u7ECF\u5386\u662F\u4EC0\u4E48\uFF1F" : "\u9009\u4E00\u4E2A\u4EBA\uFF0C\u7528\u773C\u795E\u5BF9\u89C630\u79D2\u4E0D\u8BB8\u7B11"}"}
@@ -349,19 +355,52 @@ function filterItems(items, isExplicit = false) {
 }
 function parseResponse(rawText) {
   try {
-    const jsonMatch = rawText.match(/\[([\s\S]*)\]/);
-    const jsonString = jsonMatch ? `[${jsonMatch[1]}]` : rawText;
-    const items = JSON.parse(jsonString);
-    if (!Array.isArray(items)) {
-      throw new Error("\u89E3\u6790\u5931\u8D25\uFF1A\u54CD\u5E94\u4E0D\u662F\u6570\u7EC4");
+    let jsonString = rawText.trim();
+    const jsonMatch = jsonString.match(/\[([\s\S]*)\]/);
+    if (jsonMatch) {
+      jsonString = `[${jsonMatch[1]}]`;
     }
-    return items.map((item, index) => ({
-      id: `gen-${Date.now()}-${index}`,
-      type: item.type,
-      text: item.text
-    }));
+    try {
+      const items = JSON.parse(jsonString);
+      if (Array.isArray(items)) {
+        return items.map((item, index) => ({
+          id: `gen-${Date.now()}-${index}`,
+          type: item.type,
+          text: item.text
+        }));
+      }
+    } catch (firstError) {
+      console.warn("[LLM] \u9996\u6B21\u89E3\u6790\u5931\u8D25\uFF0C\u5C1D\u8BD5\u624B\u52A8\u63D0\u53D6\u5B57\u6BB5:", firstError.message);
+      const fixedObjects = [];
+      const objectStrings = jsonString.split(/\},\s*\{/);
+      for (let objStr of objectStrings) {
+        if (!objStr.startsWith("{")) objStr = "{" + objStr;
+        if (!objStr.endsWith("}")) objStr = objStr + "}";
+        const typeMatch = objStr.match(/"type"\s*:\s*"(truth|dare)"/);
+        if (!typeMatch) continue;
+        const type = typeMatch[1];
+        const textStart = objStr.indexOf('"text"');
+        const colonIndex = objStr.indexOf(":", textStart);
+        const firstQuoteAfterColon = objStr.indexOf('"', colonIndex + 1);
+        let textContent = objStr.substring(firstQuoteAfterColon + 1);
+        textContent = textContent.replace(/"\s*\}\s*\]?\s*$/, "");
+        fixedObjects.push({
+          type,
+          text: textContent
+        });
+      }
+      if (fixedObjects.length > 0) {
+        console.log("[LLM] \u4FEE\u590D\u6210\u529F\uFF0C\u63D0\u53D6\u5230", fixedObjects.length, "\u4E2A\u5BF9\u8C61");
+        return fixedObjects.map((item, index) => ({
+          id: `gen-${Date.now()}-${index}`,
+          type: item.type,
+          text: item.text
+        }));
+      }
+    }
+    throw new Error("\u89E3\u6790\u5931\u8D25\uFF1A\u54CD\u5E94\u4E0D\u662F\u6570\u7EC4");
   } catch (err) {
-    console.error("[LLM] \u89E3\u6790\u54CD\u5E94\u5931\u8D25:", rawText, err.message);
+    console.error("[LLM] \u89E3\u6790\u54CD\u5E94\u5931\u8D25:", rawText.substring(0, 200), "...", err.message);
     throw new Error(`LLM\u54CD\u5E94\u89E3\u6790\u5931\u8D25: ${err.message}`);
   }
 }

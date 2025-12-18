@@ -62,21 +62,77 @@ function filterItems(items, isExplicit = false) {
  */
 function parseResponse(rawText) {
   try {
-    const jsonMatch = rawText.match(/\[([\s\S]*)\]/);
-    const jsonString = jsonMatch ? `[${jsonMatch[1]}]` : rawText;
-    const items = JSON.parse(jsonString);
-
-    if (!Array.isArray(items)) {
-      throw new Error('解析失败：响应不是数组');
+    // 先尝试直接解析
+    let jsonString = rawText.trim();
+    
+    // 清理 Markdown 包裹（如 ```json [...]```）
+    const jsonMatch = jsonString.match(/\[([\s\S]*)\]/);
+    if (jsonMatch) {
+      jsonString = `[${jsonMatch[1]}]`;
+    }
+    
+    // 尝试第一次解析
+    try {
+      const items = JSON.parse(jsonString);
+      if (Array.isArray(items)) {
+        return items.map((item, index) => ({
+          id: `gen-${Date.now()}-${index}`,
+          type: item.type,
+          text: item.text
+        }));
+      }
+    } catch (firstError) {
+      // 第一次解析失败，尝试修复引号问题
+      console.warn('[LLM] 首次解析失败，尝试手动提取字段:', firstError.message);
+      
+      // 更鲁棒的策略：手动提取 type 和 text 字段
+      const fixedObjects = [];
+      
+      // 分割成多个可能的对象
+      const objectStrings = jsonString.split(/\},\s*\{/);
+      
+      for (let objStr of objectStrings) {
+        // 补全可能缺失的大括号
+        if (!objStr.startsWith('{')) objStr = '{' + objStr;
+        if (!objStr.endsWith('}')) objStr = objStr + '}';
+        
+        // 提取 type 字段（这个通常没问题）
+        const typeMatch = objStr.match(/"type"\s*:\s*"(truth|dare)"/);
+        if (!typeMatch) continue;
+        
+        const type = typeMatch[1];
+        
+        // 提取 text 字段（可能包含未转义的引号）
+        // 策略：找到 "text": " 之后，一直到最后的 " 之前的所有内容
+        const textStart = objStr.indexOf('"text"');
+        const colonIndex = objStr.indexOf(':', textStart);
+        const firstQuoteAfterColon = objStr.indexOf('"', colonIndex + 1);
+        
+        // 从第一个引号后开始，找到倒数第二个引号（最后一个是对象结尾的}前的）
+        let textContent = objStr.substring(firstQuoteAfterColon + 1);
+        
+        // 移除末尾的 "}] 之类的字符
+        textContent = textContent.replace(/"\s*\}\s*\]?\s*$/, '');
+        
+        fixedObjects.push({
+          type: type,
+          text: textContent
+        });
+      }
+      
+      if (fixedObjects.length > 0) {
+        console.log('[LLM] 修复成功，提取到', fixedObjects.length, '个对象');
+        return fixedObjects.map((item, index) => ({
+          id: `gen-${Date.now()}-${index}`,
+          type: item.type,
+          text: item.text
+        }));
+      }
     }
 
-    return items.map((item, index) => ({
-      id: `gen-${Date.now()}-${index}`,
-      type: item.type,
-      text: item.text
-    }));
+    throw new Error('解析失败：响应不是数组');
   } catch (err) {
-    console.error('[LLM] 解析响应失败:', rawText, err.message);
+    console.error('[LLM] 解析响应失败:', rawText.substring(0, 200), '...', err.message);
     throw new Error(`LLM响应解析失败: ${err.message}`);
   }
 }
