@@ -81,13 +81,15 @@ export function buildPrompt({ mode, style, locale, count, audienceAge, intensity
 确保语言简洁，任务可执行。
 
 ⚠️ 重要格式要求：
-- 题目内容中不要使用双引号(")，可以用单引号(')、书名号(《》)或直接省略引号
-- 避免使用可能破坏 JSON 格式的特殊字符
+- 必须使用标准 JSON 格式，type 和 text 字段名必须用双引号(")包裹
+- text 字段的值也必须用双引号(")包裹，符合 JSON 规范
+- text 内容中如需强调某些词，可以用单引号(')或书名号(《》)，但不要用双引号
+- 示例：{"type": "truth", "text": "你最'尴尬'的经历是什么？"}
 
 ${modeInstruction}
 
 输出格式为严格的 JSON 数组，每项包含 type（${mode}）与 text（题目内容）。
-⚠️ 特别注意：text 字段的内容中不能出现双引号(")，否则会导致 JSON 解析失败。
+⚠️ 特别注意：JSON 的键和值必须用双引号(")，text 内容中避免使用双引号以防转义问题。
 
 示例：
 [

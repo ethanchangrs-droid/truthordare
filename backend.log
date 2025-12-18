@@ -1,0 +1,18 @@
+
+> truthor-dare-backend@1.0.0 start
+> node src/server.js
+
+file:///Users/david/Desktop/pitem/TruthorDare/backend/node_modules/openai/client.mjs:89
+            throw new Errors.OpenAIError('Missing credentials. Please pass an `apiKey`, or set the `OPENAI_API_KEY` environment variable.');
+                  ^
+
+OpenAIError: Missing credentials. Please pass an `apiKey`, or set the `OPENAI_API_KEY` environment variable.
+    at new OpenAI (file:///Users/david/Desktop/pitem/TruthorDare/backend/node_modules/openai/client.mjs:89:19)
+    at LLMService.initProvider (file:///Users/david/Desktop/pitem/TruthorDare/backend/src/services/llmService.js:19:21)
+    at new LLMService (file:///Users/david/Desktop/pitem/TruthorDare/backend/src/services/llmService.js:13:10)
+    at file:///Users/david/Desktop/pitem/TruthorDare/backend/src/services/llmService.js:72:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.20.0

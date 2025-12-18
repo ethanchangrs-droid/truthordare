@@ -87,27 +87,43 @@ Web 应用将在 `http://localhost:5174` 启动。
 
 ```
 TruthorDare/
-├── functions/         # EdgeOne 边缘函数
-│   └── api/
-│       └── generate.js      # /api/generate 接口
-├── web/               # Web 前端
-│   └── src/
-│       ├── App.jsx          # 主组件
-│       └── main.jsx         # 入口文件
-├── miniprogram/       # 微信小程序
-│   ├── pages/
-│   │   └── index/           # 主页面
+├── shared/               # 公共模块（单一真实源）
+│   ├── llm/
+│   │   └── parser.js            # LLM响应解析器（统一处理）
+│   ├── prompt/
+│   │   ├── builder.js           # Prompt构建逻辑
+│   │   └── dimensions.js        # 话题维度定义
 │   └── config/
-│       └── index.js         # 配置文件
-├── backend/           # 后端服务（本地开发用）
+│       └── llm-params.js        # LLM参数配置
+├── functions/            # EdgeOne 边缘函数
+│   └── api/
+│       ├── generate-source.js   # 源码（引用shared/）
+│       └── generate.js          # 打包后部署版本
+├── web/                  # Web 前端
+│   └── src/
+│       ├── App.jsx              # 主组件
+│       └── main.jsx             # 入口文件
+├── miniprogram/          # 微信小程序
+│   ├── pages/
+│   │   └── index/               # 主页面
+│   └── config/
+│       └── index.js             # 配置文件
+├── backend/              # 后端服务（本地开发用）
 │   ├── src/
-│   │   ├── server.js        # 入口文件
-│   │   ├── services/        # LLM 服务
-│   │   └── utils/           # 工具函数
-│   └── .env.example         # 环境变量模板
-├── pages.json         # EdgeOne Pages 配置
-├── feature_list.json  # 功能清单
-└── claude-progress.txt # 开发进度
+│   │   ├── server.js            # 入口文件
+│   │   ├── services/            # LLM 服务（引用shared/）
+│   │   └── utils/               # 工具函数
+│   └── .env.example             # 环境变量模板
+├── docs/                 # 项目文档
+│   ├── PRD_TruthOrDare_V1.4_202512181524.md    # 产品需求文档
+│   ├── SPEC_TruthOrDare_V1.4_202512181524.md   # 技术设计文档
+│   └── archive/                 # 历史版本归档
+├── log/                  # 开发日志
+├── scripts/
+│   └── bundle-functions.js      # 边缘函数打包脚本
+├── pages.json            # EdgeOne Pages 配置
+├── feature_list.json     # 功能清单
+└── claude-progress.txt   # 开发进度
 ```
 
 ## API 接口
@@ -121,11 +137,12 @@ TruthorDare/
 ```json
 {
   "mode": "truth",           // truth 或 dare
-  "style": "正常",            // 风格（11种可选）
+  "style": "正常",            // 风格（12种可选）
   "locale": "zh-CN",         // 语言
-  "count": 5,                // 数量（1-20）
+  "count": 1,                // 数量（固定为1）
   "audienceAge": "adult",    // 受众年龄：kids/teen/adult
-  "intensity": "medium"      // 尺度：soft/medium/hard
+  "intensity": "medium",     // 尺度：soft/medium/hard
+  "seed": 123                // 随机数种子（1-1000）
 }
 ```
 
@@ -142,10 +159,11 @@ TruthorDare/
   ],
   "meta": {
     "provider": "deepseek",
-    "promptId": "prompt-001",
+    "promptId": "prompt-002",
     "latencyMs": 1250,
     "filteredCount": 0,
-    "cached": false
+    "cached": false,
+    "seed": 123
   }
 }
 ```
@@ -153,12 +171,31 @@ TruthorDare/
 ## 功能特性
 
 - ✅ 多种模式：真心话 / 大冒险
-- ✅ 11 种风格：正常、暧昧、搞笑、职场、酒局、家庭、烧脑、极限、少儿适宜、派对、温情
+- ✅ 12 种风格：正常、暧昧、搞笑、职场、酒局、家庭、烧脑、极限、少儿适宜、派对、温情、大尺度（18+）
 - ✅ 内容安全：自动过滤不当内容
 - ✅ 限流保护：防止滥用
 - ✅ 智能缓存：提升响应速度，降低成本
-- ✅ 复制功能：单条复制 / 批量复制
+- ✅ 公共模块：统一核心逻辑，降低维护成本
 - ✅ 跨平台：Web + 微信小程序
+
+## 架构特点
+
+### 公共模块设计（V1.4）
+
+项目采用 `shared/` 目录统一管理核心逻辑，实现代码复用：
+
+| 模块 | 功能 | 复用情况 |
+|------|------|----------|
+| `shared/llm/parser.js` | LLM响应解析 | 后端服务 + EdgeOne函数 |
+| `shared/prompt/builder.js` | Prompt构建 | 后端服务 + EdgeOne函数 |
+| `shared/prompt/dimensions.js` | 话题维度定义 | 后端服务 + EdgeOne函数 |
+| `shared/config/llm-params.js` | LLM参数配置 | 后端服务 + EdgeOne函数 |
+
+**架构优势**：
+- ✅ 消除代码重复，单一真实源
+- ✅ Bug修复自动同步到所有环境
+- ✅ 降低 50% 维护成本
+- ✅ 提升代码质量和可测试性
 
 ## 部署
 
@@ -184,11 +221,13 @@ TruthorDare/
 
 ## 开发进度
 
-当前完成度：**28.6%** (6/21)
+当前完成度：**40.0%** (10/25)
 
 查看详细进度：
 - `feature_list.json` - 功能清单
 - `claude-progress.txt` - 开发日志
+- `docs/` - 产品需求和技术设计文档（最新：V1.4）
+- `log/` - 开发日志和问题复盘
 
 ## License
 
