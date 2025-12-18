@@ -65,10 +65,7 @@ function parseResponse(rawText) {
     // 先尝试直接解析
     let jsonString = rawText.trim();
     
-    console.log('[LLM] 原始响应:', rawText.substring(0, 500)); // 调试日志
-    
     // 清理 Markdown 包裹（如 ```json [...]```）
-    // 同时处理异常包裹如 {[...]} 或 ({[...]})
     const jsonMatch = jsonString.match(/\[([\s\S]*)\]/);
     if (jsonMatch) {
       jsonString = `[${jsonMatch[1]}]`;
@@ -115,11 +112,7 @@ function parseResponse(rawText) {
         let textContent = objStr.substring(firstQuoteAfterColon + 1);
         
         // 移除末尾的 "}] 之类的字符
-        // 策略：从后往前找到第一个引号，截取到该引号之前
-        const lastQuoteIndex = textContent.lastIndexOf('"');
-        if (lastQuoteIndex !== -1) {
-          textContent = textContent.substring(0, lastQuoteIndex);
-        }
+        textContent = textContent.replace(/"\s*\}\s*\]?\s*$/, '');
         
         fixedObjects.push({
           type: type,
@@ -141,55 +134,6 @@ function parseResponse(rawText) {
   } catch (err) {
     console.error('[LLM] 解析响应失败:', rawText.substring(0, 200), '...', err.message);
     throw new Error(`LLM响应解析失败: ${err.message}`);
-  }
-}
-
-/**
- * 延迟函数（用于重试）
- */
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * 带超时和重试的 fetch 请求
- */
-async function fetchWithRetry(url, options, attemptNumber = 1) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), llmParams.timeout);
-  
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (err) {
-    clearTimeout(timeoutId);
-    
-    const isRetryable = 
-      err.name === 'AbortError' ||
-      err.message.includes('timeout') ||
-      err.message.includes('ECONNRESET') ||
-      err.message.includes('ETIMEDOUT') ||
-      err.message.includes('ENOTFOUND') ||
-      err.message.includes('peer_error') ||
-      err.message.includes('network');
-
-    if (isRetryable && attemptNumber < llmParams.retry.maxAttempts) {
-      const retryDelay = Math.min(
-        llmParams.retry.initialDelay * Math.pow(llmParams.retry.backoffMultiplier, attemptNumber - 1),
-        llmParams.retry.maxDelay
-      );
-      
-      console.warn(`[LLM] 第 ${attemptNumber} 次请求失败，${retryDelay}ms 后重试...`, err.message);
-      await delay(retryDelay);
-      
-      return fetchWithRetry(url, options, attemptNumber + 1);
-    }
-    
-    throw err;
   }
 }
 
@@ -218,8 +162,7 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
     throw new Error(`未配置 ${provider.toUpperCase()}_API_KEY 环境变量`);
   }
 
-  // 使用带重试和超时的 fetch
-  const response = await fetchWithRetry(apiUrl, {
+  const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

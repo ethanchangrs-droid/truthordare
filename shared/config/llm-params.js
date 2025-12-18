@@ -37,15 +37,6 @@ export const llmParams = {
   // 🚦 限流配置
   rateLimit: {
     perMinute: 20            // 每分钟最大请求次数
-  },
-  
-  // ⏱️ 超时与重试配置
-  timeout: 30000,            // API 请求超时时间（毫秒）- 30秒
-  retry: {
-    maxAttempts: 3,          // 最大重试次数
-    initialDelay: 1000,      // 初始重试延迟（毫秒）
-    maxDelay: 5000,          // 最大重试延迟（毫秒）
-    backoffMultiplier: 2     // 延迟倍增系数（指数退避）
   }
 };
 
