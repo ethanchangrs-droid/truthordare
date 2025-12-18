@@ -134,7 +134,9 @@ function parseResponse(rawText) {
     
   } catch (err) {
     console.error('[LLM] 解析响应失败:', rawText.substring(0, 300), '...错误:', err.message);
-    throw new Error(`LLM响应解析失败: ${err.message}`);
+    // 临时添加：在错误中包含原始响应前100字符，用于诊断
+    const preview = rawText.substring(0, 100).replace(/[\n\r]/g, '\\n');
+    throw new Error(`LLM响应解析失败: ${err.message} [原始响应: ${preview}...]`);
   }
 }
 

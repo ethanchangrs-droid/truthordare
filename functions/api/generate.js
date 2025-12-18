@@ -394,7 +394,8 @@ function parseResponse(rawText) {
     }];
   } catch (err) {
     console.error("[LLM] \u89E3\u6790\u54CD\u5E94\u5931\u8D25:", rawText.substring(0, 300), "...\u9519\u8BEF:", err.message);
-    throw new Error(`LLM\u54CD\u5E94\u89E3\u6790\u5931\u8D25: ${err.message}`);
+    const preview = rawText.substring(0, 100).replace(/[\n\r]/g, "\\n");
+    throw new Error(`LLM\u54CD\u5E94\u89E3\u6790\u5931\u8D25: ${err.message} [\u539F\u59CB\u54CD\u5E94: ${preview}...]`);
   }
 }
 async function callLLM(env, { mode, style, locale, count, audienceAge, intensity, seed }) {
