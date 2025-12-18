@@ -1,0 +1,14 @@
+{
+  "name": "@truthordare/shared",
+  "version": "1.0.0",
+  "description": "Truth or Dare - Shared modules for backend and EdgeOne Functions",
+  "type": "module",
+  "exports": {
+    "./prompt/dimensions": "./prompt/dimensions.js",
+    "./prompt/builder": "./prompt/builder.js"
+  },
+  "keywords": ["truth-or-dare", "shared", "prompt"],
+  "author": "",
+  "license": "MIT"
+}
+
