@@ -8,8 +8,8 @@ function App() {
   const [error, setError] = useState(null);
   // const [copiedId, setCopiedId] = useState(null); // 复制成功提示 - 暂时禁用
 
-  // 风格列表，新增"大尺度"
-  const styles = ['正常', '暧昧', '搞笑', '职场', '酒局', '家庭', '烧脑', '极限', '少儿适宜', '派对', '温情', '大尺度'];
+  // 风格列表，新增"大尺度"和"社牛"
+  const styles = ['正常', '暧昧', '搞笑', '社牛', '职场', '酒局', '家庭', '烧脑', '极限', '少儿适宜', '派对', '温情', '大尺度'];
 
   const handleGenerate = async () => {
     // 防抖：生成过程中按钮点击无效
