@@ -374,17 +374,17 @@ function parseResponse(rawText) {
     } catch (parseError) {
       console.warn("[LLM] JSON\u89E3\u6790\u5931\u8D25\uFF0C\u5C1D\u8BD5\u624B\u52A8\u63D0\u53D6:", parseError.message);
     }
-    const typeMatch = jsonString.match(/"type"\s*:\s*"(truth|dare)"/i);
+    const typeMatch = jsonString.match(/[""]type[""]\s*:\s*[""]?(truth|dare)[""]?/i);
     if (!typeMatch) {
       throw new Error("\u65E0\u6CD5\u63D0\u53D6 type \u5B57\u6BB5");
     }
-    const textFieldMatch = jsonString.match(/"text"\s*:\s*"/);
+    const textFieldMatch = jsonString.match(/[""]text[""]\s*:\s*[""]/);
     if (!textFieldMatch) {
       throw new Error("\u65E0\u6CD5\u63D0\u53D6 text \u5B57\u6BB5");
     }
     const textValueStart = jsonString.indexOf(textFieldMatch[0]) + textFieldMatch[0].length;
     let textContent = jsonString.substring(textValueStart);
-    textContent = textContent.replace(/"\s*\}[\s\}\]]*$/, "");
+    textContent = textContent.replace(/[""]\s*\}[\s\}\]]*$/, "");
     textContent = textContent.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
     console.log("[LLM] \u624B\u52A8\u63D0\u53D6\u6210\u529F");
     return [{

@@ -107,27 +107,28 @@ class LLMService {
         console.warn('[LLM] JSON解析失败，尝试手动提取:', parseError.message);
       }
       
-      // 5. JSON.parse 失败或结果无效，使用正则直接提取
-      // 提取 type 字段
-      const typeMatch = jsonString.match(/"type"\s*:\s*"(truth|dare)"/i);
-      if (!typeMatch) {
-        throw new Error('无法提取 type 字段');
-      }
-      
-      // 提取 text 字段 - 使用更鲁棒的方法
-      // 策略：找到 "text": " 后的内容，到最后一个 " 之前（排除结尾的 "}] 等）
-      const textFieldMatch = jsonString.match(/"text"\s*:\s*"/);
-      if (!textFieldMatch) {
-        throw new Error('无法提取 text 字段');
-      }
-      
-      // 找到 text 值的起始位置
-      const textValueStart = jsonString.indexOf(textFieldMatch[0]) + textFieldMatch[0].length;
-      let textContent = jsonString.substring(textValueStart);
-      
-      // 从后往前找到真正的结束引号（跳过 }、]、空白等）
-      // 先移除末尾的 }] 等结构
-      textContent = textContent.replace(/"\s*\}[\s\}\]]*$/, '');
+    // 5. JSON.parse 失败或结果无效，使用正则直接提取
+    // 提取 type 字段（同时匹配中英文引号）
+    const typeMatch = jsonString.match(/[""]type[""]\s*:\s*[""]?(truth|dare)[""]?/i);
+    if (!typeMatch) {
+      throw new Error('无法提取 type 字段');
+    }
+    
+    // 提取 text 字段 - 使用更鲁棒的方法
+    // 策略：找到 "text": " 后的内容，同时匹配中文全角引号
+    // 注意：LLM有时会返回中文引号 "" 而非英文引号 ""
+    const textFieldMatch = jsonString.match(/[""]text[""]\s*:\s*[""]/);
+    if (!textFieldMatch) {
+      throw new Error('无法提取 text 字段');
+    }
+    
+    // 找到 text 值的起始位置
+    const textValueStart = jsonString.indexOf(textFieldMatch[0]) + textFieldMatch[0].length;
+    let textContent = jsonString.substring(textValueStart);
+    
+    // 从后往前找到真正的结束引号（跳过 }、]、空白等）
+    // 同时匹配中英文引号
+    textContent = textContent.replace(/[""]\s*\}[\s\}\]]*$/, '');
       
       // 还原可能的转义字符
       textContent = textContent
