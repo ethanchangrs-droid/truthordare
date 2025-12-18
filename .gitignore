@@ -8,10 +8,6 @@ node_modules/
 # 但保留示例文件
 !.env.example
 
-# 文档和日志文件夹
-docs/
-log/
-
 # 部署指令文档（本地使用）
 PUSH_INSTRUCTIONS.md
 DEPLOY_EDGEONE.md
