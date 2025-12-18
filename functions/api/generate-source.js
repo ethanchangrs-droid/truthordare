@@ -99,15 +99,16 @@ function parseResponse(rawText) {
     
     // 5. JSON.parse 失败或结果无效，使用正则直接提取
     // 提取 type 字段（同时匹配中英文引号）
-    const typeMatch = jsonString.match(/[""]type[""]\s*:\s*[""]?(truth|dare)[""]?/i);
+    // 引号类型: " (U+0022), " (U+201C 左), " (U+201D 右)
+    const typeMatch = jsonString.match(/[""\u201C\u201D]type[""\u201C\u201D]\s*:\s*[""\u201C\u201D]?(truth|dare)[""\u201C\u201D]?/i);
     if (!typeMatch) {
       throw new Error('无法提取 type 字段');
     }
     
     // 提取 text 字段 - 使用更鲁棒的方法
     // 策略：找到 "text": " 后的内容，同时匹配中文全角引号
-    // 注意：LLM有时会返回中文引号 "" 而非英文引号 ""
-    const textFieldMatch = jsonString.match(/[""]text[""]\s*:\s*[""]/);
+    // 引号类型: " (U+0022), " (U+201C 左), " (U+201D 右)
+    const textFieldMatch = jsonString.match(/[""\u201C\u201D]text[""\u201C\u201D]\s*:\s*[""\u201C\u201D]/);
     if (!textFieldMatch) {
       throw new Error('无法提取 text 字段');
     }
@@ -118,7 +119,7 @@ function parseResponse(rawText) {
     
     // 从后往前找到真正的结束引号（跳过 }、]、空白等）
     // 同时匹配中英文引号
-    textContent = textContent.replace(/[""]\s*\}[\s\}\]]*$/, '');
+    textContent = textContent.replace(/[""\u201C\u201D]\s*\}[\s\}\]]*$/, '');
     
     // 还原可能的转义字符
     textContent = textContent
