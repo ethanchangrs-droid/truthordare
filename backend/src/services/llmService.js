@@ -67,82 +67,83 @@ class LLMService {
     }
   }
 
+  /**
+   * 解析 LLM 响应
+   * 
+   * 处理多种可能的格式：
+   * - 标准格式: [{ "type": "dare", "text": "内容" }]
+   * - 大括号包裹: {[ { "type": "dare", "text": "内容" } ]}
+   * - Markdown包裹: ```json [...] ```
+   * - text内容含未转义引号的情况
+   */
   parseResponse(rawText) {
     try {
-      // 先尝试直接解析
       let jsonString = rawText.trim();
       
-      // 清理 Markdown 包裹（如 ```json [...]```）
-      const jsonMatch = jsonString.match(/\[(.*)\]/s);
+      // 1. 移除 Markdown 代码块包裹
+      jsonString = jsonString.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+      
+      // 2. 移除外层大括号包裹: {[...]} → [...]
+      // 注意：必须在提取方括号内容之前处理
+      jsonString = jsonString.replace(/^\s*\{\s*\[/, '[').replace(/\]\s*\}\s*$/, ']');
+      
+      // 3. 提取方括号内容（处理可能的前后多余字符）
+      const jsonMatch = jsonString.match(/\[([\s\S]*)\]/);
       if (jsonMatch) {
         jsonString = `[${jsonMatch[1]}]`;
       }
       
-      // 尝试第一次解析
+      // 4. 尝试 JSON.parse
       try {
         const items = JSON.parse(jsonString);
-        if (Array.isArray(items)) {
+        if (Array.isArray(items) && items.length > 0 && items[0].text) {
           return items.map((item, index) => ({
             id: `gen-${Date.now()}-${index}`,
             type: item.type,
             text: item.text
           }));
         }
-      } catch (firstError) {
-        // 第一次解析失败，尝试修复引号问题
-        console.warn('[LLM] 首次解析失败，尝试手动提取字段:', firstError.message);
-        
-        // 更鲁棒的策略：手动提取 type 和 text 字段
-        const fixedObjects = [];
-        
-        // 分割成多个可能的对象
-        const objectStrings = jsonString.split(/\},\s*\{/);
-        
-        for (let objStr of objectStrings) {
-          // 补全可能缺失的大括号
-          if (!objStr.startsWith('{')) objStr = '{' + objStr;
-          if (!objStr.endsWith('}')) objStr = objStr + '}';
-          
-          // 提取 type 字段（这个通常没问题）
-          const typeMatch = objStr.match(/"type"\s*:\s*"(truth|dare)"/);
-          if (!typeMatch) continue;
-          
-          const type = typeMatch[1];
-          
-          // 提取 text 字段（可能包含未转义的引号）
-          // 策略：找到 "text": " 之后，一直到最后的 " 之前的所有内容
-          const textStartMatch = objStr.match(/"text"\s*:\s*"/);
-          if (!textStartMatch) continue;
-          
-          const textStart = objStr.indexOf('"text"');
-          const colonIndex = objStr.indexOf(':', textStart);
-          const firstQuoteAfterColon = objStr.indexOf('"', colonIndex + 1);
-          
-          // 从第一个引号后开始，找到倒数第二个引号（最后一个是对象结尾的}前的）
-          let textContent = objStr.substring(firstQuoteAfterColon + 1);
-          
-          // 移除末尾的 "}] 之类的字符
-          textContent = textContent.replace(/"\s*\}\s*\]?\s*$/, '');
-          
-          fixedObjects.push({
-            type: type,
-            text: textContent
-          });
-        }
-        
-        if (fixedObjects.length > 0) {
-          console.log('[LLM] 修复成功，提取到', fixedObjects.length, '个对象');
-          return fixedObjects.map((item, index) => ({
-            id: `gen-${Date.now()}-${index}`,
-            type: item.type,
-            text: item.text
-          }));
-        }
+      } catch (parseError) {
+        console.warn('[LLM] JSON解析失败，尝试手动提取:', parseError.message);
       }
-
-      throw new Error('解析失败：响应不是数组');
+      
+      // 5. JSON.parse 失败或结果无效，使用正则直接提取
+      // 提取 type 字段
+      const typeMatch = jsonString.match(/"type"\s*:\s*"(truth|dare)"/i);
+      if (!typeMatch) {
+        throw new Error('无法提取 type 字段');
+      }
+      
+      // 提取 text 字段 - 使用更鲁棒的方法
+      // 策略：找到 "text": " 后的内容，到最后一个 " 之前（排除结尾的 "}] 等）
+      const textFieldMatch = jsonString.match(/"text"\s*:\s*"/);
+      if (!textFieldMatch) {
+        throw new Error('无法提取 text 字段');
+      }
+      
+      // 找到 text 值的起始位置
+      const textValueStart = jsonString.indexOf(textFieldMatch[0]) + textFieldMatch[0].length;
+      let textContent = jsonString.substring(textValueStart);
+      
+      // 从后往前找到真正的结束引号（跳过 }、]、空白等）
+      // 先移除末尾的 }] 等结构
+      textContent = textContent.replace(/"\s*\}[\s\}\]]*$/, '');
+      
+      // 还原可能的转义字符
+      textContent = textContent
+        .replace(/\\n/g, '\n')
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, '\\');
+      
+      console.log('[LLM] 手动提取成功');
+      return [{
+        id: `gen-${Date.now()}-0`,
+        type: typeMatch[1],
+        text: textContent
+      }];
+      
     } catch (err) {
-      console.error('[LLM] 解析响应失败:', rawText.substring(0, 200), '...', err.message);
+      console.error('[LLM] 解析响应失败:', rawText.substring(0, 300), '...错误:', err.message);
       throw new Error(`LLM响应解析失败: ${err.message}`);
     }
   }

@@ -356,51 +356,44 @@ function filterItems(items, isExplicit = false) {
 function parseResponse(rawText) {
   try {
     let jsonString = rawText.trim();
+    jsonString = jsonString.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
+    jsonString = jsonString.replace(/^\s*\{\s*\[/, "[").replace(/\]\s*\}\s*$/, "]");
     const jsonMatch = jsonString.match(/\[([\s\S]*)\]/);
     if (jsonMatch) {
       jsonString = `[${jsonMatch[1]}]`;
     }
     try {
       const items = JSON.parse(jsonString);
-      if (Array.isArray(items)) {
+      if (Array.isArray(items) && items.length > 0 && items[0].text) {
         return items.map((item, index) => ({
           id: `gen-${Date.now()}-${index}`,
           type: item.type,
           text: item.text
         }));
       }
-    } catch (firstError) {
-      console.warn("[LLM] \u9996\u6B21\u89E3\u6790\u5931\u8D25\uFF0C\u5C1D\u8BD5\u624B\u52A8\u63D0\u53D6\u5B57\u6BB5:", firstError.message);
-      const fixedObjects = [];
-      const objectStrings = jsonString.split(/\},\s*\{/);
-      for (let objStr of objectStrings) {
-        if (!objStr.startsWith("{")) objStr = "{" + objStr;
-        if (!objStr.endsWith("}")) objStr = objStr + "}";
-        const typeMatch = objStr.match(/"type"\s*:\s*"(truth|dare)"/);
-        if (!typeMatch) continue;
-        const type = typeMatch[1];
-        const textStart = objStr.indexOf('"text"');
-        const colonIndex = objStr.indexOf(":", textStart);
-        const firstQuoteAfterColon = objStr.indexOf('"', colonIndex + 1);
-        let textContent = objStr.substring(firstQuoteAfterColon + 1);
-        textContent = textContent.replace(/"\s*\}\s*\]?\s*$/, "");
-        fixedObjects.push({
-          type,
-          text: textContent
-        });
-      }
-      if (fixedObjects.length > 0) {
-        console.log("[LLM] \u4FEE\u590D\u6210\u529F\uFF0C\u63D0\u53D6\u5230", fixedObjects.length, "\u4E2A\u5BF9\u8C61");
-        return fixedObjects.map((item, index) => ({
-          id: `gen-${Date.now()}-${index}`,
-          type: item.type,
-          text: item.text
-        }));
-      }
+    } catch (parseError) {
+      console.warn("[LLM] JSON\u89E3\u6790\u5931\u8D25\uFF0C\u5C1D\u8BD5\u624B\u52A8\u63D0\u53D6:", parseError.message);
     }
-    throw new Error("\u89E3\u6790\u5931\u8D25\uFF1A\u54CD\u5E94\u4E0D\u662F\u6570\u7EC4");
+    const typeMatch = jsonString.match(/"type"\s*:\s*"(truth|dare)"/i);
+    if (!typeMatch) {
+      throw new Error("\u65E0\u6CD5\u63D0\u53D6 type \u5B57\u6BB5");
+    }
+    const textFieldMatch = jsonString.match(/"text"\s*:\s*"/);
+    if (!textFieldMatch) {
+      throw new Error("\u65E0\u6CD5\u63D0\u53D6 text \u5B57\u6BB5");
+    }
+    const textValueStart = jsonString.indexOf(textFieldMatch[0]) + textFieldMatch[0].length;
+    let textContent = jsonString.substring(textValueStart);
+    textContent = textContent.replace(/"\s*\}[\s\}\]]*$/, "");
+    textContent = textContent.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+    console.log("[LLM] \u624B\u52A8\u63D0\u53D6\u6210\u529F");
+    return [{
+      id: `gen-${Date.now()}-0`,
+      type: typeMatch[1],
+      text: textContent
+    }];
   } catch (err) {
-    console.error("[LLM] \u89E3\u6790\u54CD\u5E94\u5931\u8D25:", rawText.substring(0, 200), "...", err.message);
+    console.error("[LLM] \u89E3\u6790\u54CD\u5E94\u5931\u8D25:", rawText.substring(0, 300), "...\u9519\u8BEF:", err.message);
     throw new Error(`LLM\u54CD\u5E94\u89E3\u6790\u5931\u8D25: ${err.message}`);
   }
 }
