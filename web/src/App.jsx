@@ -45,7 +45,11 @@ function App() {
         // 只取第一条结果
         setResult(data.items?.[0] || null);
       } else {
-        setError(data.error || '生成失败');
+        // 显示更详细的错误信息
+        const errorMsg = data.details 
+          ? `${data.error}\n详情: ${data.details}` 
+          : data.error || '生成失败';
+        setError(errorMsg);
       }
     } catch (err) {
       setError('网络错误，请稍后再试');

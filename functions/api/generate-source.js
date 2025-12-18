@@ -299,9 +299,32 @@ export async function onRequest(context) {
     return jsonResponse(result);
   } catch (err) {
     console.error('[Function] 处理请求失败:', err);
+    
+    // 细化错误提示
+    let errorMsg = '生成失败，请稍后再试';
+    let errorCode = 'UNKNOWN_ERROR';
+    
+    if (err.message.includes('API_KEY') || err.message.includes('未配置')) {
+      errorMsg = 'LLM 服务配置错误，请联系管理员';
+      errorCode = 'LLM_CONFIG_ERROR';
+    } else if (err.message.includes('429')) {
+      errorMsg = 'LLM 服务请求频率超限，请稍后再试';
+      errorCode = 'LLM_RATE_LIMIT';
+    } else if (err.message.includes('401') || err.message.includes('403')) {
+      errorMsg = 'LLM 服务认证失败，请检查 API 密钥';
+      errorCode = 'LLM_AUTH_ERROR';
+    } else if (err.message.includes('解析失败') || err.message.includes('解析响应失败')) {
+      errorMsg = 'LLM 响应格式异常，请重试';
+      errorCode = 'LLM_PARSE_ERROR';
+    } else if (err.message.includes('500') || err.message.includes('502') || err.message.includes('503')) {
+      errorMsg = 'LLM 服务暂时不可用，请稍后再试';
+      errorCode = 'LLM_SERVICE_ERROR';
+    }
+    
     return jsonResponse({ 
-      error: '生成失败，请稍后再试',
-      details: err.message 
+      error: errorMsg,
+      code: errorCode,
+      details: err.message  // 保留详细信息用于调试
     }, 500);
   }
 }

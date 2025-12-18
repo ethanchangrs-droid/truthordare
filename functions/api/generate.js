@@ -160,7 +160,10 @@ function getDimensionHint(style) {
 // shared/prompt/builder.js
 function buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed }) {
   const isExplicit = style === "\u5927\u5C3A\u5EA6";
-  const dimensions = styleDimensions[style] || [];
+  const dimensions = styleDimensions[style] || styleDimensions["\u6B63\u5E38"] || [];
+  if (dimensions.length === 0) {
+    console.warn(`[Prompt] \u672A\u627E\u5230\u98CE\u683C "${style}" \u7684\u7EF4\u5EA6\u5B9A\u4E49\uFF0C\u4F7F\u7528\u7A7A\u7EF4\u5EA6`);
+  }
   const targetDimensionIndex = dimensions.length > 0 ? Math.floor(Math.random() * dimensions.length) : null;
   const targetDimension = targetDimensionIndex !== null ? dimensions[targetDimensionIndex] : null;
   const dimensionHint = getDimensionHint(style);
@@ -525,9 +528,29 @@ async function onRequest(context) {
     return jsonResponse(result);
   } catch (err) {
     console.error("[Function] \u5904\u7406\u8BF7\u6C42\u5931\u8D25:", err);
+    let errorMsg = "\u751F\u6210\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5";
+    let errorCode = "UNKNOWN_ERROR";
+    if (err.message.includes("API_KEY") || err.message.includes("\u672A\u914D\u7F6E")) {
+      errorMsg = "LLM \u670D\u52A1\u914D\u7F6E\u9519\u8BEF\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458";
+      errorCode = "LLM_CONFIG_ERROR";
+    } else if (err.message.includes("429")) {
+      errorMsg = "LLM \u670D\u52A1\u8BF7\u6C42\u9891\u7387\u8D85\u9650\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5";
+      errorCode = "LLM_RATE_LIMIT";
+    } else if (err.message.includes("401") || err.message.includes("403")) {
+      errorMsg = "LLM \u670D\u52A1\u8BA4\u8BC1\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5 API \u5BC6\u94A5";
+      errorCode = "LLM_AUTH_ERROR";
+    } else if (err.message.includes("\u89E3\u6790\u5931\u8D25") || err.message.includes("\u89E3\u6790\u54CD\u5E94\u5931\u8D25")) {
+      errorMsg = "LLM \u54CD\u5E94\u683C\u5F0F\u5F02\u5E38\uFF0C\u8BF7\u91CD\u8BD5";
+      errorCode = "LLM_PARSE_ERROR";
+    } else if (err.message.includes("500") || err.message.includes("502") || err.message.includes("503")) {
+      errorMsg = "LLM \u670D\u52A1\u6682\u65F6\u4E0D\u53EF\u7528\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5";
+      errorCode = "LLM_SERVICE_ERROR";
+    }
     return jsonResponse({
-      error: "\u751F\u6210\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5",
+      error: errorMsg,
+      code: errorCode,
       details: err.message
+      // 保留详细信息用于调试
     }, 500);
   }
 }

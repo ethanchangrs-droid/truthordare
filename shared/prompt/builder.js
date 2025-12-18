@@ -24,7 +24,13 @@ export function buildPrompt({ mode, style, locale, count, audienceAge, intensity
   const isExplicit = style === '大尺度';
   
   // 代码层面随机选取一个话题维度，而不是让 LLM 自己选择
-  const dimensions = styleDimensions[style] || [];
+  // 风格名称容错：如果找不到维度定义，使用"正常"风格作为兜底
+  const dimensions = styleDimensions[style] || styleDimensions['正常'] || [];
+  
+  if (dimensions.length === 0) {
+    console.warn(`[Prompt] 未找到风格 "${style}" 的维度定义，使用空维度`);
+  }
+  
   const targetDimensionIndex = dimensions.length > 0 ? Math.floor(Math.random() * dimensions.length) : null;
   const targetDimension = targetDimensionIndex !== null ? dimensions[targetDimensionIndex] : null;
   
