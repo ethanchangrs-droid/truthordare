@@ -285,6 +285,19 @@ var llmParams = {
   rateLimit: {
     perMinute: 20
     // 每分钟最大请求次数
+  },
+  // ⏱️ 超时与重试配置
+  timeout: 3e4,
+  // API 请求超时时间（毫秒）- 30秒
+  retry: {
+    maxAttempts: 3,
+    // 最大重试次数
+    initialDelay: 1e3,
+    // 初始重试延迟（毫秒）
+    maxDelay: 5e3,
+    // 最大重试延迟（毫秒）
+    backoffMultiplier: 2
+    // 延迟倍增系数（指数退避）
   }
 };
 
@@ -356,6 +369,7 @@ function filterItems(items, isExplicit = false) {
 function parseResponse(rawText) {
   try {
     let jsonString = rawText.trim();
+    console.log("[LLM] \u539F\u59CB\u54CD\u5E94:", rawText.substring(0, 500));
     const jsonMatch = jsonString.match(/\[([\s\S]*)\]/);
     if (jsonMatch) {
       jsonString = `[${jsonMatch[1]}]`;
@@ -383,7 +397,10 @@ function parseResponse(rawText) {
         const colonIndex = objStr.indexOf(":", textStart);
         const firstQuoteAfterColon = objStr.indexOf('"', colonIndex + 1);
         let textContent = objStr.substring(firstQuoteAfterColon + 1);
-        textContent = textContent.replace(/"\s*\}\s*\]?\s*$/, "");
+        const lastQuoteIndex = textContent.lastIndexOf('"');
+        if (lastQuoteIndex !== -1) {
+          textContent = textContent.substring(0, lastQuoteIndex);
+        }
         fixedObjects.push({
           type,
           text: textContent
@@ -404,6 +421,34 @@ function parseResponse(rawText) {
     throw new Error(`LLM\u54CD\u5E94\u89E3\u6790\u5931\u8D25: ${err.message}`);
   }
 }
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function fetchWithRetry(url, options, attemptNumber = 1) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), llmParams.timeout);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    const isRetryable = err.name === "AbortError" || err.message.includes("timeout") || err.message.includes("ECONNRESET") || err.message.includes("ETIMEDOUT") || err.message.includes("ENOTFOUND") || err.message.includes("peer_error") || err.message.includes("network");
+    if (isRetryable && attemptNumber < llmParams.retry.maxAttempts) {
+      const retryDelay = Math.min(
+        llmParams.retry.initialDelay * Math.pow(llmParams.retry.backoffMultiplier, attemptNumber - 1),
+        llmParams.retry.maxDelay
+      );
+      console.warn(`[LLM] \u7B2C ${attemptNumber} \u6B21\u8BF7\u6C42\u5931\u8D25\uFF0C${retryDelay}ms \u540E\u91CD\u8BD5...`, err.message);
+      await delay(retryDelay);
+      return fetchWithRetry(url, options, attemptNumber + 1);
+    }
+    throw err;
+  }
+}
 async function callLLM(env, { mode, style, locale, count, audienceAge, intensity, seed }) {
   const provider = env.LLM_PROVIDER || "deepseek";
   const prompt = buildPrompt({ mode, style, locale, count, audienceAge, intensity, seed });
@@ -422,7 +467,7 @@ async function callLLM(env, { mode, style, locale, count, audienceAge, intensity
   if (!apiKey) {
     throw new Error(`\u672A\u914D\u7F6E ${provider.toUpperCase()}_API_KEY \u73AF\u5883\u53D8\u91CF`);
   }
-  const response = await fetch(apiUrl, {
+  const response = await fetchWithRetry(apiUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
