@@ -73,7 +73,7 @@ TruthorDare/
 - `POST /api/generate`
   - Request JSON：
     - `mode`: `"truth" | "dare"` ✅
-    - `style`: 中文风格名（正常/暧昧/搞笑/职场/酒局/家庭/烧脑/极限/少儿适宜/派对/温情/**大尺度**）✅ **（共12项）**
+    - `style`: 中文风格名（正常/暧昧/搞笑/职场/酒局/家庭/烧脑/少儿适宜/派对/温情/**大尺度**）✅ **（共11项）**
     - `locale`: `"zh-CN" | "en-US"`，默认 `zh-CN` ✅
     - `count`: 1-20，默认 `1` ✅ **（每次生成1题）**
     - `audienceAge`: `"kids" | "teen" | "adult"`，默认 `adult` ✅
