@@ -103,7 +103,8 @@ export const styleDimensions = {
       '个人喜好'
     ],
     dare: [
-      '个人喜好'
+      '个人喜好',
+      '向家人表白'
     ]
   },
   '烧脑': {
@@ -152,7 +153,8 @@ export const styleDimensions = {
       '个人喜好'
     ],
     dare: [
-      '个人喜好'
+      '个人喜好',
+      '表达感谢'
     ]
   },
   '大尺度': {
@@ -168,7 +170,9 @@ export const styleDimensions = {
     dare: [
       '亲密接触任务',
       '个人喜好',
-      '摆个姿势'
+      '摆个姿势',
+      '性感动作',
+      '挑逗动作'
     ]
   },
   '少儿适宜': {
@@ -200,7 +204,11 @@ export const styleDimensions = {
       '个人喜好'
     ],
     dare: [
-      '个人喜好'
+      '个人喜好',
+      '大胆表白',
+      '翻手机通讯录',
+      '翻手机相册',
+      '说假话'
     ]
   }
 };
