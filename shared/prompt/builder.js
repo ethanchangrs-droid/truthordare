@@ -90,7 +90,7 @@ export function buildPrompt({ mode, style, locale, count, audienceAge, intensity
 示例（正确）：
   - 模仿一种动物叫声持续10秒
   - 用最夸张的姿势完成5个深蹲
-  - 对着房间里的一个物品表白30秒`;
+  - 对着房间里的一个物品表白15秒`;
 
   if (isExplicit) {
     systemPrompt = `
