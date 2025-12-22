@@ -9,6 +9,25 @@
 import { getDimensionHint, styleDimensions } from './dimensions.js';
 
 /**
+ * 根据模式获取风格的话题维度
+ * @param {string} style - 风格名称
+ * @param {string} mode - 模式(truth/dare)
+ * @returns {Array} 维度数组
+ */
+function getDimensionsByMode(style, mode) {
+  const styleConfig = styleDimensions[style];
+  if (!styleConfig) return [];
+  
+  // 如果是旧的数组格式，直接返回
+  if (Array.isArray(styleConfig)) {
+    return styleConfig;
+  }
+  
+  // 如果是新的对象格式，返回对应模式的维度
+  return styleConfig[mode] || [];
+}
+
+/**
  * 构建 LLM Prompt
  * @param {Object} params
  * @param {string} params.mode - truth/dare
@@ -25,7 +44,7 @@ export function buildPrompt({ mode, style, locale, count, audienceAge, intensity
   
   // 代码层面随机选取一个话题维度，而不是让 LLM 自己选择
   // 风格名称容错：如果找不到维度定义，使用"正常"风格作为兜底
-  const dimensions = styleDimensions[style] || styleDimensions['正常'] || [];
+  const dimensions = getDimensionsByMode(style, mode) || getDimensionsByMode('正常', mode) || [];
   
   if (dimensions.length === 0) {
     console.warn(`[Prompt] 未找到风格 "${style}" 的维度定义，使用空维度`);
@@ -34,6 +53,7 @@ export function buildPrompt({ mode, style, locale, count, audienceAge, intensity
   const targetDimensionIndex = dimensions.length > 0 ? Math.floor(Math.random() * dimensions.length) : null;
   const targetDimension = targetDimensionIndex !== null ? dimensions[targetDimensionIndex] : null;
   
+  // 注意：getDimensionHint 仍然使用原来的 styleDimensions[style] 格式
   const dimensionHint = getDimensionHint(style);
 
   let systemPrompt;
@@ -65,7 +85,7 @@ export function buildPrompt({ mode, style, locale, count, audienceAge, intensity
   
 ❌ 绝对禁止：
   - 任何只需要"说话回答"的内容
-  - 题目中不能只是：讲述、描述、回答、说说、回忆等纯语言表达
+  - 题目中不能是：表达、讲述、描述、回答、说说、回忆等纯语言表达
   
 示例（正确）：
   - 模仿一种动物叫声持续10秒
@@ -104,6 +124,7 @@ ${modeInstruction}
 ${modeInstruction}
 
 输出格式为严格的 JSON 数组，每项包含 type（${mode}）与 text（题目内容）。
+⚠️ 特别注意：JSON 的键和值必须用双引号(")，text 内容中避免使用双引号以防转义问题。
 示例：
 [
   {"type": "${mode}", "text": "${mode === 'truth' ? '你最尴尬的一次经历是什么？' : '模仿一种动物叫声持续10秒'}"}

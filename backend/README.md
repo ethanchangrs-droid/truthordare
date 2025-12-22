@@ -108,7 +108,7 @@ curl -X POST http://localhost:3002/api/generate \
 | `DEEPSEEK_MODEL` | DeepSeek 模型名称 | `deepseek-chat` |
 | `LLM_TEMPERATURE` | 生成温度 | `0.8` |
 | `LLM_MAX_TOKENS` | 最大 token 数 | `1000` |
-| `RATE_LIMIT_PER_MINUTE` | 每分钟限流次数 | `6` |
+| `RATE_LIMIT_PER_MINUTE` | 每分钟限流次数 | `60` |
 | `CACHE_TTL` | 缓存过期时间（秒） | `600` (10分钟) |
 
 详细说明见 [.env.example](./env.example)。
